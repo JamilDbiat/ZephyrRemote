@@ -13,7 +13,8 @@ public class VideoStreamer
     {
         "-f lavfi -i \"ddagrab=output_idx={0}:framerate=60\" -c:v h264_nvenc -preset p1 -tune ull -zerolatency 1 -rc cbr -b:v {1} -g 120 -bf 0",
         "-f lavfi -i \"ddagrab=output_idx={0}:framerate=60,hwmap=derive_device=qsv,format=qsv\" -c:v h264_qsv -preset veryfast -low_power 1 -b:v {1} -g 120 -bf 0",
-        "-f lavfi -i \"ddagrab=output_idx={0}:framerate=30,hwdownload,format=bgra,scale=1280:-2,format=yuv420p\" -c:v libx264 -preset ultrafast -tune zerolatency -b:v {1} -g 60 -bf 0"
+        "-f lavfi -i \"ddagrab=output_idx={0}:framerate=60\" -c:v h264_amf -usage ultralowlatency -quality speed -rc cbr -b:v {1} -g 120 -bf 0",
+        "-f lavfi -i \"ddagrab=output_idx={0}:framerate=30,hwdownload,format=bgra,scale=1280:-2,format=yuv420p\" -c:v libx264 -preset ultrafast -tune zerolatency -b:v 1500k -maxrate 2M -bufsize 1M -g 60 -bf 0"
     };
 
     private readonly string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZephyrRemote");

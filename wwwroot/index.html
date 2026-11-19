@@ -667,6 +667,7 @@ let moveBusy = false;
 let pendingMove = null;
 
 async function startScreen() {
+  inputSocket();
   const res = await api('/api/screens');
   const info = await res.json();
   if (screenIndex >= info.count) screenIndex = 0;
@@ -921,7 +922,7 @@ function toggleFull() {
 }
 
 function scrollPc(dir) {
-  api('/api/mouse/scroll?amount=' + (dir * 360), 'POST');
+  if (!sendInput('scroll ' + (dir * 360))) api('/api/mouse/scroll?amount=' + (dir * 360), 'POST');
 }
 
 let kbQueue = Promise.resolve();
@@ -1063,11 +1064,48 @@ function mouseUrl(action, p, button) {
   return url;
 }
 
+let inputWs = null;
+let moveTimer = null;
+
+function inputSocket() {
+  if (inputWs && inputWs.readyState <= 1) return inputWs;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  inputWs = new WebSocket(`${proto}://${location.host}/api/input?${auth()}`);
+  return inputWs;
+}
+
+function sendInput(text) {
+  const ws = inputSocket();
+  if (ws.readyState !== 1) return false;
+  ws.send(text);
+  return true;
+}
+
+function inputText(action, p, button) {
+  return `${action} ${screenIndex} ${p ? p.x.toFixed(4) : 0} ${p ? p.y.toFixed(4) : 0} ${button || 'left'}`;
+}
+
 function mouseSend(action, p, button) {
+  if (sendInput(inputText(action, p, button))) return;
   mouseQueue = mouseQueue.then(() => api(mouseUrl(action, p, button), 'POST'));
 }
 
+function flushMove() {
+  moveTimer = null;
+  if (!pendingMove) return;
+  if (inputWs && inputWs.readyState === 1 && inputWs.bufferedAmount > 512) {
+    moveTimer = setTimeout(flushMove, 16);
+    return;
+  }
+  if (sendInput(inputText('move', pendingMove))) pendingMove = null;
+}
+
 function mouseMove(p) {
+  if (inputSocket().readyState === 1) {
+    pendingMove = p;
+    if (!moveTimer) flushMove();
+    return;
+  }
   pendingMove = p;
   if (moveBusy) return;
   moveBusy = true;
@@ -1168,7 +1206,7 @@ screenView.addEventListener('touchmove', e => {
       while (Math.abs(gesture.scrollAcc) >= 25) {
         const dir = gesture.scrollAcc > 0 ? 1 : -1;
         gesture.scrollAcc -= dir * 25;
-        api('/api/mouse/scroll?amount=' + (dir * 120), 'POST');
+        if (!sendInput('scroll ' + (dir * 120))) api('/api/mouse/scroll?amount=' + (dir * 120), 'POST');
       }
     }
     gesture.lastMy = info.my;

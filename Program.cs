@@ -1,3 +1,6 @@
+using System.Text;
+using System.Net.WebSockets;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.ServiceProcess;
 using QRCoder;
@@ -383,6 +386,80 @@ app.MapGet("/api/stream/{index:int}", async (int index, HttpContext context) =>
         int wait = 33 - (int)(Environment.TickCount64 - start);
         if (wait > 0)
             await Task.Delay(wait, token);
+    }
+});
+
+async Task HandleInput(string[] p)
+{
+    CultureInfo c = CultureInfo.InvariantCulture;
+    int display = p.Length > 1 && int.TryParse(p[1], out int d) ? d : 0;
+    double x = p.Length > 2 && double.TryParse(p[2], NumberStyles.Float, c, out double px) ? px : 0;
+    double y = p.Length > 3 && double.TryParse(p[3], NumberStyles.Float, c, out double py) ? py : 0;
+    string button = p.Length > 4 && (p[4] == "left" || p[4] == "right") ? p[4] : "left";
+
+    switch (p[0])
+    {
+        case "move":
+            if (agent.Available)
+                await agent.Post($"/move?{AgentClient.Point(display, x, y)}");
+            else
+                mouse.MoveTo(display, x, y);
+            break;
+        case "click":
+            if (agent.Available)
+                await agent.Post($"/click?{AgentClient.Point(display, x, y)}&button={button}");
+            else
+                mouse.Click(display, x, y, button);
+            break;
+        case "down":
+            if (agent.Available)
+            {
+                await agent.Post($"/down?{AgentClient.Point(display, x, y)}&button={button}");
+                break;
+            }
+            mouse.MoveTo(display, x, y);
+            await Task.Delay(30);
+            mouse.Press(button, true);
+            break;
+        case "up":
+            if (agent.Available)
+                await agent.Post($"/up?button={button}");
+            else
+                mouse.Press(button, false);
+            break;
+        case "scroll":
+            if (agent.Available)
+                await agent.Post($"/scroll?amount={display}");
+            else
+                mouse.Scroll(display);
+            break;
+    }
+}
+
+app.Map("/api/input", async (HttpContext context) =>
+{
+    if (!context.WebSockets.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = 400;
+        return;
+    }
+
+    using WebSocket socket = await context.WebSockets.AcceptWebSocketAsync();
+    byte[] buffer = new byte[4096];
+    while (socket.State == WebSocketState.Open)
+    {
+        WebSocketReceiveResult result;
+        try
+        {
+            result = await socket.ReceiveAsync(buffer, context.RequestAborted);
+        }
+        catch (Exception)
+        {
+            break;
+        }
+        if (result.MessageType == WebSocketMessageType.Close)
+            break;
+        await HandleInput(Encoding.UTF8.GetString(buffer, 0, result.Count).Split(' '));
     }
 });
 
