@@ -140,6 +140,10 @@ input { width: 100%; padding: 12px; border-radius: 12px; border: none; backgroun
   <button onclick="power('restart')">Restart</button>
   <button class="danger" onclick="power('shutdown')">Off</button>
 </div>
+<div id="updateBanner" class="card" style="display:none;flex-direction:row;align-items:center;gap:10px;padding:12px;background:#1d2b4a">
+  <div style="flex:1"><b style="font-size:15px">⬆️ Update available</b><br><small id="updateBannerText"></small></div>
+  <button class="primary" style="width:auto;padding:10px 14px" onclick="updateAction()">Update</button>
+</div>
 <div class="tabs">
   <button id="tab-apps" class="on" onclick="tab('apps')">Apps</button>
   <button id="tab-running" onclick="tab('running')">Open now</button>
@@ -357,6 +361,8 @@ let updateInfo = null;
 
 function showUpdate(info) {
   updateInfo = info;
+  document.getElementById('updateBanner').style.display = info.available && info.installable ? 'flex' : 'none';
+  document.getElementById('updateBannerText').textContent = `v${info.current} → v${info.latest}`;
   const text = document.getElementById('updateText');
   const btn = document.getElementById('updateBtn');
   if (info.available && info.installable) {
@@ -485,6 +491,7 @@ async function load() {
   apps = await res.json();
   render();
 
+  loadUpdate();
   const info = await (await api('/api/info')).json();
   document.getElementById('info').innerHTML = 'PC MAC: ' + escapeHtml(info.mac) + ' · <a class="link" onclick="toggleSettings()">Settings</a>';
 }

@@ -41,6 +41,7 @@ VideoStreamer video = new();
 DeviceTracker devices = new();
 FileBrowser files = new();
 UpdateChecker updates = new();
+TrayApp? trayApp = null;
 
 string ClientIp(HttpContext context)
 {
@@ -209,7 +210,7 @@ _ = Task.Run(async () =>
     Version? announced = null;
     while (true)
     {
-        await Task.Delay(startup ? TimeSpan.FromSeconds(45) : TimeSpan.FromHours(6));
+        await Task.Delay(startup ? TimeSpan.FromSeconds(45) : TimeSpan.FromHours(1));
         try
         {
             if (await updates.Check())
@@ -222,6 +223,7 @@ _ = Task.Run(async () =>
                 else if (announced != updates.Latest)
                 {
                     announced = updates.Latest;
+                    trayApp?.NotifyUpdate();
                     remote.Alert($"⬆️ **Zephyr v{updates.Latest} is available.** Open ⚙️ in Zephyr and tap Update.");
                 }
             }
@@ -499,7 +501,11 @@ remote.Start();
 Task.Run(ServiceInstaller.EnsureInstalled);
 AppDomain.CurrentDomain.ProcessExit += (s, e) => remote.Shutdown();
 
-Thread trayThread = new(() => Application.Run(new TrayApp(Port, firstRun, pins, devices)));
+Thread trayThread = new(() =>
+{
+    trayApp = new TrayApp(Port, firstRun, pins, devices, updates);
+    Application.Run(trayApp);
+});
 trayThread.SetApartmentState(ApartmentState.STA);
 trayThread.Start();
 trayThread.Join();
