@@ -12,6 +12,7 @@ public class RemoteAccess
 
     private readonly string exePath;
     private readonly string settingsFile;
+    private readonly string logPath;
     private readonly int port;
     private readonly object sync = new();
     private Process? tunnel;
@@ -27,6 +28,7 @@ public class RemoteAccess
         Directory.CreateDirectory(folder);
         exePath = Path.Combine(folder, "cloudflared.exe");
         settingsFile = Path.Combine(folder, "remote.json");
+        logPath = Path.Combine(folder, "cloudflared.log");
 
         if (File.Exists(settingsFile))
             Settings = JsonSerializer.Deserialize<RemoteSettings>(File.ReadAllText(settingsFile)) ?? new RemoteSettings();
@@ -35,6 +37,9 @@ public class RemoteAccess
 
     public void Start()
     {
+        if (Settings.Enabled && Adopt())
+            return;
+
         foreach (Process old in Process.GetProcessesByName("cloudflared"))
         {
             if (string.Equals(old.MainModule?.FileName, exePath, StringComparison.OrdinalIgnoreCase))
@@ -144,17 +149,16 @@ public class RemoteAccess
             }
 
             Status = "connecting";
-            ProcessStartInfo info = new(exePath, $"tunnel --no-autoupdate --url http://localhost:{port}")
+            if (File.Exists(logPath))
+                File.Delete(logPath);
+
+            ProcessStartInfo info = new(exePath, $"tunnel --no-autoupdate --logfile \"{logPath}\" --url http://localhost:{port}")
             {
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
             Process process = new() { StartInfo = info, EnableRaisingEvents = true };
-            process.OutputDataReceived += (s, e) => ReadLine(e.Data);
-            process.ErrorDataReceived += (s, e) => ReadLine(e.Data);
             process.Exited += (s, e) => Restart();
 
             lock (sync)
@@ -162,8 +166,18 @@ public class RemoteAccess
                 process.Start();
                 tunnel = process;
             }
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+
+            for (int i = 0; i < 120 && !process.HasExited; i++)
+            {
+                await Task.Delay(500);
+                string url = FindUrl();
+                if (url == "")
+                    continue;
+                Url = url;
+                Status = "on";
+                _ = Notify();
+                break;
+            }
         }
         catch (Exception ex)
         {
@@ -181,15 +195,31 @@ public class RemoteAccess
         Task.Delay(5000).ContinueWith(_ => Run());
     }
 
-    private void ReadLine(string? line)
+    private bool Adopt()
     {
-        Match match = Regex.Match(line ?? "", @"https://[a-z0-9-]+\.trycloudflare\.com");
-        if (!match.Success || match.Value == Url)
-            return;
+        Process? running = Process.GetProcessesByName("cloudflared")
+            .FirstOrDefault(p => string.Equals(p.MainModule?.FileName, exePath, StringComparison.OrdinalIgnoreCase));
+        string url = FindUrl();
+        if (running == null || url == "")
+            return false;
 
-        Url = match.Value;
+        running.EnableRaisingEvents = true;
+        running.Exited += (s, e) => Restart();
+        lock (sync)
+            tunnel = running;
+        Url = url;
         Status = "on";
-        _ = Notify();
+        return true;
+    }
+
+    private string FindUrl()
+    {
+        if (!File.Exists(logPath))
+            return "";
+        using FileStream stream = new(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using StreamReader reader = new(stream);
+        Match match = Regex.Match(reader.ReadToEnd(), @"https://(?!api\.)[a-z0-9-]+\.trycloudflare\.com");
+        return match.Success ? match.Value : "";
     }
 
     private string botId = "";

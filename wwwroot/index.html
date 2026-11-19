@@ -140,6 +140,13 @@ input { width: 100%; padding: 12px; border-radius: 12px; border: none; backgroun
   <button onclick="power('restart')">Restart</button>
   <button class="danger" onclick="power('shutdown')">Off</button>
 </div>
+<div id="updateOverlay" style="display:none;position:fixed;inset:0;background:#0f1115;z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center">
+  <div style="font-size:44px">⬆️</div>
+  <b id="updTitle" style="font-size:20px">Updating Zephyr</b>
+  <div style="width:100%;max-width:320px;height:10px;background:#1c1f26;border-radius:5px;overflow:hidden"><div id="updBar" style="height:100%;width:0;background:#3b82f6;border-radius:5px;transition:width .5s"></div></div>
+  <small id="updText" style="color:#8b8f99">Starting…</small>
+  <button id="updReload" class="primary" style="display:none;padding:12px 28px" onclick="location.reload()">Reload</button>
+</div>
 <div id="updateBanner" class="card" style="display:none;flex-direction:row;align-items:center;gap:10px;padding:12px;background:#1d2b4a">
   <div style="flex:1"><b style="font-size:15px">⬆️ Update available</b><br><small id="updateBannerText"></small></div>
   <button class="primary" style="width:auto;padding:10px 14px" onclick="updateAction()">Update</button>
@@ -384,15 +391,63 @@ async function loadUpdate() {
 
 async function updateAction() {
   if (updateInfo && updateInfo.available && updateInfo.installable) {
-    if (!confirm('Update Zephyr now? It restarts and comes back in about a minute with a new link (your bot DMs it).')) return;
-    const res = await api('/api/update/install', 'POST');
-    toast(res.ok ? 'Updating… see you in a minute' : 'Update failed');
+    if (!confirm('Update Zephyr now? It restarts and comes back in about a minute.')) return;
+    runUpdate();
     return;
   }
   document.getElementById('updateText').textContent = 'Checking…';
   const res = await api('/api/update/check', 'POST');
   if (!res.ok) { document.getElementById('updateText').textContent = "Couldn't reach GitHub"; return; }
   showUpdate(await res.json());
+}
+
+async function runUpdate() {
+  const res = await api('/api/update/install', 'POST');
+  if (!res.ok) { toast('Update failed'); return; }
+  const target = (await res.json()).target;
+  stopStream();
+  document.getElementById('settingsBox').style.display = 'none';
+  document.getElementById('updateOverlay').style.display = 'flex';
+  document.getElementById('updTitle').textContent = 'Updating Zephyr to v' + target;
+  const bar = document.getElementById('updBar');
+  const text = document.getElementById('updText');
+  const set = (p, t) => { bar.style.width = p + '%'; text.textContent = t; };
+  const started = Date.now();
+  let installingSince = 0;
+
+  const timer = setInterval(async () => {
+    let info = null;
+    try {
+      const r = await fetch('/api/update/progress?' + auth(), { cache: 'no-store' });
+      if (r.ok) info = await r.json();
+    } catch {}
+
+    if (info && info.current === target) {
+      clearInterval(timer);
+      set(100, 'Updated to v' + target + ' ✓');
+      setTimeout(() => location.reload(), 1200);
+      return;
+    }
+    if (info && info.stage === 'failed') {
+      clearInterval(timer);
+      set(0, "Download failed. Check the PC's internet and try again.");
+      document.getElementById('updReload').style.display = 'block';
+      return;
+    }
+    if (info && info.stage === 'downloading') {
+      set(Math.round(info.percent * 0.6), 'Downloading… ' + info.percent + '%');
+      return;
+    }
+
+    if (!installingSince) installingSince = Date.now();
+    const secs = (Date.now() - installingSince) / 1000;
+    set(Math.min(97, 60 + secs * 0.6), secs < 20 ? 'Installing…' : 'Restarting Zephyr…');
+    if (Date.now() - started > 180000) {
+      clearInterval(timer);
+      text.textContent = "This is taking longer than usual. Your bot will DM you when Zephyr is back.";
+      document.getElementById('updReload').style.display = 'block';
+    }
+  }, 1500);
 }
 
 async function loadRemote() {

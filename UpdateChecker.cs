@@ -36,16 +36,44 @@ public class UpdateChecker
         return Available;
     }
 
+    public string Stage { get; private set; } = "";
+    public int Percent { get; private set; }
+
     public async Task<bool> Install()
     {
-        if (!Available || !Installable)
+        if (!Available || !Installable || Stage == "downloading" || Stage == "installing")
             return false;
 
+        Stage = "downloading";
+        Percent = 0;
         string path = Path.Combine(Path.GetTempPath(), "ZephyrRemoteSetup.exe");
-        using HttpClient http = Client();
-        await using (FileStream file = File.Create(path))
-            await (await http.GetStreamAsync(downloadUrl)).CopyToAsync(file);
+        try
+        {
+            using HttpClient http = Client();
+            using HttpResponseMessage response = await http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+            long total = response.Content.Headers.ContentLength ?? 0;
+            await using Stream source = await response.Content.ReadAsStreamAsync();
+            await using (FileStream file = File.Create(path))
+            {
+                byte[] buffer = new byte[81920];
+                long done = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer)) > 0)
+                {
+                    await file.WriteAsync(buffer.AsMemory(0, read));
+                    done += read;
+                    if (total > 0)
+                        Percent = (int)(done * 100 / total);
+                }
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Stage = "failed";
+            return false;
+        }
 
+        Stage = "installing";
         Process.Start(new ProcessStartInfo(path, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = true });
         return true;
     }

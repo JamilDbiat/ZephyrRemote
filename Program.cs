@@ -198,11 +198,16 @@ app.MapPost("/api/update/check", async () =>
     return Results.Ok(new { current = updates.Current.ToString(), latest = updates.Latest?.ToString(), available = updates.Available, installable = updates.Installable });
 });
 
-app.MapPost("/api/update/install", async () =>
+app.MapPost("/api/update/install", () =>
 {
-    remote.Alert($"⬆️ **Updating Zephyr** to v{updates.Latest}. It'll be back in about a minute with a new link.");
-    return await updates.Install() ? Results.Ok() : Results.BadRequest();
+    if (!updates.Available || !updates.Installable)
+        return Results.BadRequest();
+    remote.Alert($"⬆️ **Updating Zephyr** to v{updates.Latest}. It'll be back in about a minute.");
+    _ = updates.Install();
+    return Results.Ok(new { target = updates.Latest?.ToString() });
 });
+
+app.MapGet("/api/update/progress", () => new { stage = updates.Stage, percent = updates.Percent, current = updates.Current.ToString() });
 
 _ = Task.Run(async () =>
 {
