@@ -19,3 +19,7 @@ Control your Windows PC from your phone — from anywhere.
 Zephyr starts with Windows and updates itself.
 
 Windows 10/11, 64-bit. Screen streaming is fastest with an NVIDIA, Intel or AMD GPU.
+
+## License
+
+Free and open source under the [MIT License](LICENSE).
