@@ -236,7 +236,9 @@ if (!deviceId) {
 
 async function api(path, method) {
   const sep = path.includes('?') ? '&' : '?';
-  const res = await fetch(path + sep + auth(), { method: method || 'GET' });
+  const abort = new AbortController();
+  const limit = setTimeout(() => abort.abort(), 15000);
+  const res = await fetch(path + sep + auth(), { method: method || 'GET', signal: abort.signal }).finally(() => clearTimeout(limit));
   if (res.status === 423) showLocked();
   if (res.status === 403) showPending(await res.clone().json());
   return res;
@@ -1028,7 +1030,7 @@ function flushTyping() {
   if (!kbBuffer) return;
   const text = kbBuffer;
   kbBuffer = '';
-  kbQueue = kbQueue.then(() => fetch('/api/keys/type?' + auth(), { method: 'POST', body: text }));
+  kbQueue = kbQueue.then(() => fetch('/api/keys/type?' + auth(), { method: 'POST', body: text })).catch(() => {});
 }
 
 function typeText(text) {
@@ -1038,7 +1040,7 @@ function typeText(text) {
 
 function key(name) {
   flushTyping();
-  kbQueue = kbQueue.then(() => api('/api/keys/press?key=' + encodeURIComponent(name), 'POST'));
+  kbQueue = kbQueue.then(() => api('/api/keys/press?key=' + encodeURIComponent(name), 'POST')).catch(() => {});
 }
 
 const kbInput = document.getElementById('kbInput');
@@ -1142,7 +1144,7 @@ function inputText(action, p, button) {
 
 function mouseSend(action, p, button) {
   if (sendInput(inputText(action, p, button))) return;
-  mouseQueue = mouseQueue.then(() => api(mouseUrl(action, p, button), 'POST'));
+  mouseQueue = mouseQueue.then(() => api(mouseUrl(action, p, button), 'POST')).catch(() => {});
 }
 
 function flushMove() {
@@ -1166,7 +1168,7 @@ function mouseMove(p) {
   moveBusy = true;
   const next = pendingMove;
   pendingMove = null;
-  mouseQueue = mouseQueue.then(() => api(mouseUrl('move', next), 'POST')).then(() => {
+  mouseQueue = mouseQueue.then(() => api(mouseUrl('move', next), 'POST')).catch(() => {}).then(() => {
     moveBusy = false;
     if (pendingMove) mouseMove(pendingMove);
   });

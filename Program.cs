@@ -464,7 +464,13 @@ app.Map("/api/input", async (HttpContext context) =>
         }
         if (result.MessageType == WebSocketMessageType.Close)
             break;
-        await HandleInput(Encoding.UTF8.GetString(buffer, 0, result.Count).Split(' '));
+        try
+        {
+            await HandleInput(Encoding.UTF8.GetString(buffer, 0, result.Count).Split(' '));
+        }
+        catch (Exception)
+        {
+        }
     }
 });
 
