@@ -11,6 +11,7 @@ public class TrayApp : ApplicationContext
     private readonly DeviceTracker devices;
     private readonly UpdateChecker updates;
     private readonly Control invoker = new();
+    private readonly PhoneMirror phone = new();
 
     [DllImport("kernel32.dll")]
     private static extern uint SetThreadExecutionState(uint flags);
@@ -31,6 +32,13 @@ public class TrayApp : ApplicationContext
 
         ContextMenuStrip menu = new();
         menu.Items.Add("Connect my phone (QR code)", null, (s, e) => ShowConnect());
+        ToolStripMenuItem phoneMenu = new("My phone");
+        phoneMenu.DropDownItems.Add("Show my iPhone (AirPlay)", null, async (s, e) => await PhoneAction(() => phone.ShowIphone(Status), "On your iPhone: open Control Center, tap Screen Mirroring, and pick this PC."));
+        phoneMenu.DropDownItems.Add("Show my Android (USB cable)", null, async (s, e) => await PhoneAction(() => phone.ShowAndroid(false, Status), ""));
+        phoneMenu.DropDownItems.Add("Show my Android (Wi-Fi)", null, async (s, e) => await PhoneAction(() => phone.ShowAndroid(true, Status), ""));
+        phoneMenu.DropDownItems.Add("Set up Android Wi-Fi (plug in with USB first)", null, async (s, e) => await PhoneAction(() => phone.SetupAndroidWifi(Status), "Wi-Fi is set up. Next time, use \"Show my Android (Wi-Fi)\" without the cable."));
+        menu.Items.Add(phoneMenu);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Approve waiting devices", null, (s, e) => ApproveDevices());
         menu.Items.Add("Unlock Zephyr Remote", null, (s, e) => Unlock());
         menu.Items.Add("Show recovery code", null, (s, e) => ShowRecovery());
@@ -68,6 +76,28 @@ public class TrayApp : ApplicationContext
         string list = string.Join("\n", waiting.Select(d => $"• {d.Name} · IP {d.Ip} · code {d.Code}"));
         if (MessageBox.Show("Let these devices into Zephyr Remote?\n\n" + list, "Zephyr Remote", MessageBoxButtons.YesNo) == DialogResult.Yes)
             devices.ApproveAll();
+    }
+
+    private void Status(string text)
+    {
+        invoker.BeginInvoke(() => tray.ShowBalloonTip(8000, "Zephyr Remote", text, ToolTipIcon.Info));
+    }
+
+    private async Task PhoneAction(Func<Task<string>> action, string success)
+    {
+        string error;
+        try
+        {
+            error = await action();
+        }
+        catch (HttpRequestException)
+        {
+            error = "Couldn't download it. Check your internet and try again.";
+        }
+        if (error != "")
+            MessageBox.Show(error, "Zephyr Remote");
+        else if (success != "")
+            Status(success);
     }
 
     public void NotifyUpdate()
