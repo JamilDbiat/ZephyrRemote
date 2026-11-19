@@ -332,9 +332,10 @@ app.MapPost("/api/remote/webhook", async (HttpRequest request) =>
 
 app.MapGet("/api/apps", () => scanner.GetApps());
 
-app.MapGet("/api/icon/{id}", (string id) =>
+app.MapGet("/api/icon/{id}", (string id, HttpResponse response) =>
 {
     byte[] icon = scanner.GetIcon(id);
+    response.Headers.CacheControl = "private, max-age=604800";
     return icon.Length == 0 ? Results.NotFound() : Results.File(icon, "image/png");
 });
 
@@ -496,6 +497,7 @@ app.Map("/api/video/{index:int}", async (HttpContext context, int index, string?
 
 app.MapGet("/api/info", () => new { mac = network.MacAddress, ip = network.LocalIp });
 
+scanner.Refresh();
 app.Start();
 remote.Start();
 Task.Run(ServiceInstaller.EnsureInstalled);

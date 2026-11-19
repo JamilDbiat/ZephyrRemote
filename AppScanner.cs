@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -8,13 +9,57 @@ namespace ZephyrRemote;
 
 public class AppScanner
 {
-    private readonly Dictionary<string, AppEntry> apps = new();
-    private readonly Dictionary<string, byte[]> icons = new();
+    private readonly ConcurrentDictionary<string, byte[]> icons = new();
+    private readonly string iconFolder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZephyrRemote", "icons");
+    private readonly Dictionary<string, string> targets = new();
+    private readonly object sync = new();
+    private Dictionary<string, AppEntry> apps = new();
+    private List<AppEntry> list = new();
+    private DateTime scannedAt = DateTime.MinValue;
+    private Task scanTask = Task.CompletedTask;
+
+    public void Refresh()
+    {
+        lock (sync)
+        {
+            if (!scanTask.IsCompleted)
+                return;
+
+            TaskCompletionSource done = new();
+            Thread thread = new(() =>
+            {
+                Scan();
+                done.SetResult();
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
+            thread.Start();
+            scanTask = done.Task;
+        }
+    }
 
     public List<AppEntry> GetApps()
     {
-        apps.Clear();
+        if (scannedAt == DateTime.MinValue)
+        {
+            Refresh();
+            scanTask.Wait();
+        }
+        else if (DateTime.UtcNow - scannedAt > TimeSpan.FromSeconds(30))
+        {
+            Refresh();
+        }
+        return list;
+    }
+
+    private void Scan()
+    {
+        Dictionary<string, AppEntry> found = new();
         HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
+        dynamic? shell = null;
+        Type? type = Type.GetTypeFromProgID("WScript.Shell");
+        if (type != null)
+            shell = Activator.CreateInstance(type);
 
         string[] folders =
         {
@@ -44,51 +89,38 @@ public class AppScanner
                 string name = System.IO.Path.GetFileNameWithoutExtension(file);
                 if (name.Contains("uninstall", StringComparison.OrdinalIgnoreCase))
                     continue;
-                if (ext == ".lnk" && IsBroken(file))
+                if (ext == ".lnk" && IsBroken(file, shell))
                     continue;
                 if (!names.Add(name))
                     continue;
 
                 string id = Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(file)))[..12];
-                apps[id] = new AppEntry { Id = id, Name = name, Path = file };
+                found[id] = new AppEntry { Id = id, Name = name, Path = file };
             }
         }
 
-        return apps.Values.OrderBy(a => a.Name).ToList();
+        apps = found;
+        list = found.Values.OrderBy(a => a.Name).ToList();
+        scannedAt = DateTime.UtcNow;
     }
 
-    private dynamic? shell;
-    private readonly Dictionary<string, string> targets = new();
-
-    private bool IsBroken(string shortcut)
+    private bool IsBroken(string shortcut, dynamic? shell)
     {
         if (!targets.TryGetValue(shortcut, out string? target))
         {
-            target = TargetOf(shortcut);
+            target = shell == null ? "" : (string)shell.CreateShortcut(shortcut).TargetPath;
             targets[shortcut] = target;
         }
         return target != "" && !File.Exists(target) && !Directory.Exists(target);
     }
 
-    private string TargetOf(string shortcut)
-    {
-        if (shell == null)
-        {
-            Type? type = Type.GetTypeFromProgID("WScript.Shell");
-            if (type == null)
-                return "";
-            shell = Activator.CreateInstance(type);
-        }
-
-        dynamic link = shell!.CreateShortcut(shortcut);
-        string target = link.TargetPath;
-        return target;
-    }
-
     public bool Launch(string id)
     {
         if (!apps.ContainsKey(id))
-            GetApps();
+        {
+            Refresh();
+            scanTask.Wait();
+        }
         if (!apps.TryGetValue(id, out AppEntry? app))
             return false;
 
@@ -100,8 +132,14 @@ public class AppScanner
     {
         if (icons.TryGetValue(id, out byte[]? cached))
             return cached;
+        string saved = System.IO.Path.Combine(iconFolder, id + ".png");
+        if (File.Exists(saved))
+            return icons[id] = File.ReadAllBytes(saved);
         if (!apps.ContainsKey(id))
-            GetApps();
+        {
+            Refresh();
+            scanTask.Wait();
+        }
         if (!apps.TryGetValue(id, out AppEntry? app))
             return Array.Empty<byte>();
 
@@ -115,6 +153,8 @@ public class AppScanner
 
         byte[] bytes = stream.ToArray();
         icons[id] = bytes;
+        Directory.CreateDirectory(iconFolder);
+        File.WriteAllBytes(saved, bytes);
         return bytes;
     }
 }
