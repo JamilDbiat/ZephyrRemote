@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/icon.png">
+<title>Connect your phone · Zephyr Remote</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f1115; color: #e8e8ea; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.box { background: #1c1f26; border-radius: 20px; padding: 32px; max-width: 420px; text-align: center; }
+.logo { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 12px; }
+h1 { font-size: 22px; margin-bottom: 6px; }
+p { color: #9a9ea8; font-size: 15px; line-height: 1.5; }
+.qr { background: #fff; border-radius: 14px; padding: 14px; margin: 22px auto; width: 280px; }
+.qr img { width: 100%; display: block; }
+.url { font-family: ui-monospace, Consolas, monospace; font-size: 18px; color: #6b9cff; margin-bottom: 18px; }
+ol { text-align: left; color: #c9ccd3; font-size: 14px; line-height: 1.7; padding-left: 20px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <img class="logo" src="/icon.png" alt="">
+  <h1>Connect your phone</h1>
+  <p>Scan this with your phone's camera.</p>
+  <div class="qr"><img src="/qr.png" alt="QR code"></div>
+  <div class="url" id="url"></div>
+  <div id="remoteBox" style="display:none;margin-bottom:18px">
+    <p style="margin-bottom:8px">🌍 <b>Remote link</b> (works from anywhere):</p>
+    <div class="qr" style="width:200px;margin:10px auto"><img src="/qr.png?remoteLink=true" alt="Remote QR code"></div>
+    <div class="url" id="remoteUrl" style="font-size:14px;word-break:break-all"></div>
+  </div>
+  <ol>
+    <li>Your phone must be on the same Wi-Fi as this PC.</li>
+    <li>Open the link and create a PIN (first time only).</li>
+    <li>Tap Share → <b>Add to Home Screen</b> to keep it like an app.</li>
+  </ol>
+</div>
+<script>
+fetch('/setup/url').then(r => r.json()).then(d => {
+  document.getElementById('url').textContent = d.url;
+  if (d.remote) {
+    document.getElementById('remoteUrl').textContent = d.remote;
+    document.getElementById('remoteBox').style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

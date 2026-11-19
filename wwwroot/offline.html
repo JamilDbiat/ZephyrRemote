@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Zephyr Remote</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f1115; color: #e8e8ea; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; gap: 14px; }
+img { width: 88px; height: 88px; border-radius: 22px; opacity: .5; }
+h1 { font-size: 21px; }
+p { color: #8b8f99; font-size: 14px; line-height: 1.45; max-width: 340px; }
+ul { text-align: left; color: #b8bcc6; font-size: 14px; line-height: 1.5; background: #1c1f26; border-radius: 14px; padding: 14px 14px 14px 32px; max-width: 340px; }
+button { background: #3b82f6; color: #fff; border: none; border-radius: 12px; padding: 13px 28px; font-size: 16px; }
+small { color: #6b6f7a; font-size: 12px; }
+</style>
+</head>
+<body>
+<img src="/icon-192.png" alt="">
+<h1>Can't reach your PC</h1>
+<ul>
+  <li>Your PC is off or asleep. Turn it on with Wake-on-LAN.</li>
+  <li>Your PC restarted, so the link changed. Your Zephyr Remote bot DMs you the new one, or send it <b>!zephyr</b>.</li>
+  <li>Your phone has no internet.</li>
+</ul>
+<button onclick="retry()">Try again</button>
+<small id="status">Checking every few seconds…</small>
+<script>
+async function retry() {
+  try {
+    const res = await fetch('/setup/status', { cache: 'no-store' });
+    if (res.ok) { location.replace('/'); return; }
+  } catch {}
+  document.getElementById('status').textContent = 'Still offline · ' + new Date().toLocaleTimeString();
+}
+setInterval(retry, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-title" content="Zephyr Remote">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon.png">
+<title>Zephyr Remote</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #0f1115; color: #e8e8ea; font-family: system-ui, sans-serif; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); }
+h1 { font-size: 20px; margin-bottom: 12px; }
+.power { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.power button { background: #1c1f26; color: #e8e8ea; border: none; border-radius: 12px; padding: 12px 0; font-size: 13px; }
+.power button.danger { background: #3a1d1f; color: #ff8a8a; }
+input { width: 100%; padding: 12px; border-radius: 12px; border: none; background: #1c1f26; color: #e8e8ea; font-size: 16px; margin-bottom: 16px; outline: none; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; }
+.app { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; color: inherit; }
+.app:active img { transform: scale(0.9); }
+.app img { width: 56px; height: 56px; border-radius: 14px; background: #1c1f26; padding: 10px; transition: transform .1s; }
+.app span { font-size: 11px; text-align: center; line-height: 1.2; max-height: 2.4em; overflow: hidden; word-break: break-word; }
+.info { margin-top: 24px; font-size: 11px; color: #6b6f7a; text-align: center; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2a2e38; padding: 10px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+.card { background: #1c1f26; border-radius: 14px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.card b { font-size: 17px; }
+.card small { color: #8b8f99; font-size: 13px; }
+.card input { margin: 0; background: #0f1115; }
+.primary { background: #3b82f6; color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 15px; }
+.plain { background: none; color: #8b8f99; border: none; padding: 6px; font-size: 14px; }
+.link { color: #6b9cff; text-decoration: none; cursor: pointer; }
+.label { color: #8b8f99; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; margin: 14px 4px 8px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: #1c1f26; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+.tabs button { background: none; border: none; color: #9a9ea8; padding: 10px 0; border-radius: 9px; font-size: 14px; }
+.tabs button.on { background: #3b82f6; color: #fff; }
+.row { display: flex; align-items: center; gap: 12px; background: #1c1f26; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+.row .txt { flex: 1; min-width: 0; }
+.row b { display: block; font-size: 15px; }
+.row small { display: block; color: #8b8f99; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row button { background: #3a1d1f; color: #ff8a8a; border: none; border-radius: 10px; padding: 8px 14px; font-size: 13px; }
+.screens { display: flex; gap: 6px; margin-bottom: 10px; }
+.screens button { flex: 1; background: #1c1f26; color: #e8e8ea; border: none; border-radius: 10px; padding: 10px 0; }
+.screens button.on { background: #3b82f6; }
+#screenWrap { position: relative; }
+#screenWrap.full { position: fixed; left: 0; right: 0; top: 0; height: 100vh; background: #000; z-index: 10; display: flex; flex-direction: column; overflow: hidden; }
+.ctrl button { min-width: 0; white-space: nowrap; overflow: hidden; }
+#screenView { position: relative; overflow: hidden; border-radius: 10px; background: #000; touch-action: none; }
+#screenImg, #screenCanvas { width: 100%; display: block; transform-origin: 0 0; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
+#screenCanvas { display: none; aspect-ratio: 16 / 9; background: #000; }
+#screenWrap.full #screenView { flex: 1; height: 0; border-radius: 0; }
+#screenWrap.full #screenImg, #screenWrap.full #screenCanvas { height: 100%; object-fit: contain; aspect-ratio: auto; }
+.ctrl { display: flex; gap: 6px; margin-top: 8px; }
+.ctrl button { flex: 1; background: #1c1f26; color: #e8e8ea; border: none; border-radius: 10px; padding: 10px 0; font-size: 13px; }
+.ctrl button.on { background: #3b82f6; color: #fff; }
+#screenWrap.full .ctrl { padding: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); margin: 0; }
+.keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.keys button { background: #1c1f26; color: #e8e8ea; border: none; border-radius: 8px; padding: 10px 0; font-size: 13px; }
+.keys button:active, .ctrl button:active { background: #3b82f6; }
+#screenWrap.full #kbPanel { padding: 0 8px 8px; }
+@media (orientation: landscape) {
+  #screenWrap.full .ctrl { position: absolute; top: 0; right: 0; bottom: 0; width: calc(66px + env(safe-area-inset-right)); flex-direction: column; padding: 8px; padding-right: max(8px, env(safe-area-inset-right)); background: rgba(15,17,21,.85); z-index: 2; }
+  #screenWrap.full .ctrl button { flex: 1; font-size: 11px; padding: 0 2px; white-space: normal; }
+  #screenWrap.full #screenView { margin-right: calc(66px + env(safe-area-inset-right)); margin-left: env(safe-area-inset-left); }
+  #screenWrap.full #kbPanel { margin-right: calc(66px + env(safe-area-inset-right)); }
+}
+.dot { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 2px solid #3b82f6; pointer-events: none; animation: ping .4s ease-out forwards; }
+.dot.right { border-color: #f59e0b; }
+@keyframes ping { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+</style>
+</head>
+<body>
+<h1 style="display:flex;align-items:center;justify-content:space-between">Zephyr Remote<button onclick="toggleSettings()" style="background:#1c1f26;color:#e8e8ea;border:none;border-radius:12px;width:44px;height:44px;font-size:22px">⚙️</button></h1>
+<div id="pinBox" class="card" style="display:none">
+  <b id="pinTitle">Enter your PIN</b>
+  <small id="pinHint"></small>
+  <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" onkeydown="if(event.key==='Enter')savePin()">
+  <input id="pinInput2" type="password" inputmode="numeric" placeholder="Type it again" style="display:none" onkeydown="if(event.key==='Enter')savePin()">
+  <button class="primary" onclick="savePin()">OK</button>
+</div>
+<div id="lockBox" class="card" style="display:none">
+  <b>🔒 Zephyr is locked</b>
+  <small>Someone entered the wrong PIN 3 times. Enter your recovery code to unlock, or unlock it from the Zephyr tray icon on your PC.</small>
+  <input id="unlockInput" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" onkeydown="if(event.key==='Enter')unlock()">
+  <button class="primary" onclick="unlock()">Unlock</button>
+</div>
+<div id="pendingBox" class="card" style="display:none">
+  <b>🛡️ Waiting for approval</b>
+  <small>Your PIN is right, but this is a new device. Approve it from a device you already use, from the Zephyr tray icon on your PC, or reply to your Zephyr Remote bot on Discord with:</small>
+  <div style="font-family:ui-monospace,Consolas,monospace;font-size:20px;text-align:center;background:#0f1115;border-radius:10px;padding:14px;user-select:all">approve <span id="pendingCode"></span></div>
+  <small>This page opens by itself once you approve.</small>
+</div>
+<div id="recoveryBox" class="card" style="display:none">
+  <b>Save your recovery code</b>
+  <small>If someone enters the wrong PIN 3 times, Zephyr locks. You'll need this code to unlock it. Screenshot it or write it down.</small>
+  <div id="recoveryCode" style="font-family:ui-monospace,Consolas,monospace;font-size:20px;letter-spacing:1px;text-align:center;background:#0f1115;border-radius:10px;padding:14px;user-select:all"></div>
+  <button class="primary" onclick="document.getElementById('recoveryBox').style.display='none'">I saved it</button>
+</div>
+<div id="settingsBox" class="card" style="display:none">
+  <b>🌍 Remote access</b>
+  <small>Use Zephyr from anywhere: mobile data, school, a friend's Wi-Fi. The link changes when your PC restarts.</small>
+  <button id="remoteBtn" class="primary" onclick="toggleRemote()">Turn on</button>
+  <div id="remoteInfo" style="display:none">
+    <small id="remoteStatus"></small>
+    <div id="remoteUrl" style="font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all;background:#0f1115;border-radius:10px;padding:12px;margin:8px 0;user-select:all"></div>
+    <button class="plain" onclick="copyRemote()">Copy link</button>
+  </div>
+  <small style="margin-top:6px">🤖 <b>Your Zephyr Remote bot</b>: Zephyr sends each new link to #zephyr-links as your bot, and your bot DMs you.</small>
+  <small id="botState"></small>
+  <input id="botToken" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Zephyr Remote bot token">
+  <input id="botChannel" inputmode="numeric" placeholder="#zephyr-links channel ID">
+  <button class="plain" onclick="saveBot()">Save bot</button>
+  <small style="margin-top:6px">Or use a Discord webhook instead:</small>
+  <input id="webhookInput" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/...">
+  <button class="plain" onclick="saveWebhook()">Save webhook</button>
+  <hr style="border:none;border-top:1px solid #2a2e38;margin:8px 0">
+  <b>⬆️ Updates</b>
+  <small id="updateText">Checking version…</small>
+  <button id="updateBtn" class="primary" onclick="updateAction()">Check for updates</button>
+  <hr style="border:none;border-top:1px solid #2a2e38;margin:8px 0">
+  <b>📱 Devices</b>
+  <small>New devices outside your home Wi-Fi need your approval. Your bot DMs you when one tries to get in.</small>
+  <div id="deviceList"></div>
+  <hr style="border:none;border-top:1px solid #2a2e38;margin:8px 0">
+  <b>Change PIN</b>
+  <input id="newPin" type="password" inputmode="numeric" placeholder="New PIN (at least 4 characters)">
+  <input id="newPin2" type="password" inputmode="numeric" placeholder="Type it again">
+  <button class="primary" onclick="changePin()">Save new PIN</button>
+  <button class="plain" onclick="showRecovery()">Show my recovery code</button>
+  <button class="plain" onclick="toggleSettings()">Cancel</button>
+</div>
+<div class="power">
+  <button onclick="power('lock')">Lock</button>
+  <button onclick="power('sleep')">Sleep</button>
+  <button onclick="power('restart')">Restart</button>
+  <button class="danger" onclick="power('shutdown')">Off</button>
+</div>
+<div class="tabs">
+  <button id="tab-apps" class="on" onclick="tab('apps')">Apps</button>
+  <button id="tab-running" onclick="tab('running')">Open now</button>
+  <button id="tab-screen" onclick="tab('screen')">Screen</button>
+  <button id="tab-files" onclick="tab('files')">Files</button>
+</div>
+<div id="view-apps">
+  <input id="search" placeholder="Search apps" oninput="render()">
+  <div class="grid" id="grid"></div>
+</div>
+<div id="view-files" style="display:none">
+  <div class="card" style="margin-bottom:12px">
+    <b>📋 Clipboard</b>
+    <textarea id="clipText" rows="3" placeholder="Text to send, or get the PC's clipboard" style="width:100%;box-sizing:border-box;background:#0f1115;color:#e6e8ec;border:1px solid #2a2e38;border-radius:10px;padding:10px;font-size:15px;resize:vertical"></textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="clipGet()">⬇️ Get from PC</button>
+      <button class="primary" onclick="clipSend()">⬆️ Send to PC</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <b>📤 Send files to PC</b>
+    <small>They go to Downloads\Zephyr on your PC.</small>
+    <input id="uploadInput" type="file" multiple style="display:none" onchange="uploadFiles(this.files)">
+    <button class="primary" onclick="document.getElementById('uploadInput').click()">Choose files</button>
+    <div id="uploadStatus"></div>
+  </div>
+  <b style="display:block;margin:4px 0 8px">📁 PC files</b>
+  <div id="filePath" style="color:#9a9ea8;font-size:13px;margin-bottom:8px;word-break:break-all"></div>
+  <div id="fileList"></div>
+</div>
+<div id="view-running" style="display:none">
+  <div id="runningList"></div>
+</div>
+<div id="view-screen" style="display:none">
+  <div class="screens" id="screenButtons"></div>
+  <div id="lockBanner" class="card" style="display:none;margin-bottom:10px;padding:12px">
+    <small>🔒 <b>Your PC is locked.</b> Turn Mouse on and tap the picture, then tap ⌨, type your Windows PIN or password and press Enter.</small>
+  </div>
+  <div id="screenWrap">
+    <div id="screenView"><img id="screenImg"><canvas id="screenCanvas"></canvas></div>
+    <div class="ctrl">
+      <button id="mouseBtn" onclick="toggleMouse()">Mouse: off</button>
+      <button id="hdBtn" onclick="toggleHd()">HD</button>
+      <button onclick="wakePc()">☀️</button>
+      <button id="audioBtn" onclick="toggleAudio()">🔇</button>
+      <button onclick="scrollPc(1)">Scroll ▲</button>
+      <button onclick="scrollPc(-1)">Scroll ▼</button>
+      <button id="kbBtn" onclick="toggleKeyboard()">⌨</button>
+      <button onclick="toggleFull()">⛶</button>
+    </div>
+    <div id="kbPanel" style="display:none">
+      <input id="kbInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here and type — it goes to your PC" style="margin:8px 0 6px">
+      <div class="keys">
+        <button onclick="key('esc')">Esc</button>
+        <button onclick="key('tab')">Tab</button>
+        <button onclick="key('win')">Win</button>
+        <button onclick="key('delete')">Del</button>
+        <button onclick="key('ctrl+c')">Copy</button>
+        <button onclick="key('ctrl+v')">Paste</button>
+        <button onclick="key('left')">←</button>
+        <button onclick="key('up')">↑</button>
+        <button onclick="key('down')">↓</button>
+        <button onclick="key('right')">→</button>
+        <button onclick="backspaceButton()">⌫</button>
+        <button onclick="key('enter');resetKbInput()">Enter</button>
+      </div>
+    </div>
+  </div>
+  <div class="info">Mouse on: drag = move · tap = click · hold = right click · double-tap + drag = select<br>Pinch = zoom · two-finger swipe = scroll</div>
+</div>
+<div class="info" id="info"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+let pin = localStorage.getItem('pin') || '';
+let apps = [];
+
+let deviceId = localStorage.getItem('dev');
+if (!deviceId) {
+  deviceId = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g, '');
+  localStorage.setItem('dev', deviceId);
+}
+
+async function api(path, method) {
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(path + sep + auth(), { method: method || 'GET' });
+  if (res.status === 423) showLocked();
+  if (res.status === 403) showPending(await res.clone().json());
+  return res;
+}
+
+function auth() {
+  return 'pin=' + encodeURIComponent(pin) + '&dev=' + deviceId;
+}
+
+let pendingTimer = null;
+function showPending(info) {
+  document.getElementById('pendingCode').textContent = info.code;
+  if (pendingTimer) return;
+  document.getElementById('pendingBox').style.display = 'flex';
+  document.getElementById('pinBox').style.display = 'none';
+  ['view-apps', 'view-running', 'view-screen', 'view-files'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.querySelector('.tabs').style.display = 'none';
+  document.querySelector('.power').style.display = 'none';
+  stopStream();
+  pendingTimer = setInterval(async () => {
+    const res = await fetch('/api/info?' + auth());
+    if (res.ok) location.reload();
+  }, 3000);
+}
+
+async function deviceAction(action, id) {
+  if (action === 'remove' && !confirm('Remove this device? It will need approval again to get in.')) return;
+  const res = await api('/api/devices/' + action + '?id=' + encodeURIComponent(id), 'POST');
+  toast(res.ok ? (action === 'approve' ? 'Approved ✓' : 'Removed') : 'Failed');
+  loadDevices();
+}
+
+function showLocked() {
+  if (document.getElementById('lockBox').style.display === 'flex') return;
+  document.getElementById('lockBox').style.display = 'flex';
+  document.getElementById('pinBox').style.display = 'none';
+  ['view-apps', 'view-running', 'view-screen', 'view-files'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.querySelector('.tabs').style.display = 'none';
+  document.querySelector('.power').style.display = 'none';
+  stopStream();
+}
+
+async function unlock() {
+  const code = document.getElementById('unlockInput').value;
+  const res = await fetch('/setup/unlock', { method: 'POST', body: code });
+  if (!res.ok) { toast('Wrong recovery code'); return; }
+  document.getElementById('unlockInput').value = '';
+  toast('Unlocked ✓');
+  setTimeout(() => location.reload(), 600);
+}
+
+async function showRecovery() {
+  const res = await api('/api/recovery');
+  if (!res.ok) return;
+  const data = await res.json();
+  document.getElementById('recoveryCode').textContent = data.code;
+  document.getElementById('recoveryBox').style.display = 'flex';
+}
+
+let creatingPin = false;
+
+async function showPin(show) {
+  document.getElementById('pinBox').style.display = show ? 'flex' : 'none';
+  if (!show) return;
+  const status = await (await fetch('/setup/status')).json();
+  if (status.locked) { showLocked(); return; }
+  creatingPin = !status.hasPin;
+  document.getElementById('pinTitle').textContent = creatingPin ? 'Create a PIN' : 'Enter your PIN';
+  document.getElementById('pinHint').textContent = creatingPin
+    ? 'Pick a PIN for this PC (at least 4 characters). You\'ll need it to connect from any phone.'
+    : 'Type the PIN you set for this PC. ' + status.triesLeft + (status.triesLeft === 1 ? ' try' : ' tries') + ' left before Zephyr locks.';
+  document.getElementById('pinInput2').style.display = creatingPin ? 'block' : 'none';
+}
+
+async function savePin() {
+  const value = document.getElementById('pinInput').value.trim();
+  if (creatingPin) {
+    if (value.length < 4) { toast('PIN must be at least 4 characters'); return; }
+    if (value !== document.getElementById('pinInput2').value.trim()) { toast('PINs don\'t match'); return; }
+    const res = await fetch('/setup/pin', { method: 'POST', body: value });
+    if (!res.ok) { toast('Could not save PIN'); return; }
+    const created = await res.json();
+    document.getElementById('recoveryCode').textContent = created.code;
+    document.getElementById('recoveryBox').style.display = 'flex';
+    toast('PIN saved ✓');
+  }
+  pin = value;
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinInput2').value = '';
+  load();
+}
+
+let remoteTimer = null;
+
+function toggleSettings() {
+  const box = document.getElementById('settingsBox');
+  const open = box.style.display === 'none';
+  box.style.display = open ? 'flex' : 'none';
+  if (open) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    loadRemote();
+  } else {
+    clearTimeout(remoteTimer);
+  }
+}
+
+function ago(iso) {
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 90) return 'active now';
+  if (s < 3600) return Math.round(s / 60) + ' min ago';
+  if (s < 86400) return Math.round(s / 3600) + ' h ago';
+  return Math.round(s / 86400) + ' days ago';
+}
+
+async function loadDevices() {
+  const res = await api('/api/devices');
+  if (!res.ok) return;
+  const list = await res.json();
+  document.getElementById('deviceList').innerHTML = list.map(d => `
+    <div class="row" style="margin-bottom:6px">
+      <div class="txt"><b>${escapeHtml(d.name)}${d.id === deviceId ? ' <span style="color:#6b9cff;font-size:12px">(this device)</span>' : ''}</b>
+      <small>${d.trusted ? '' : '🛡️ Waiting for approval · '}${d.remote ? '🌍 Remote' : '🏠 Home Wi-Fi'} · ${ago(d.lastSeen)} · IP ${escapeHtml(d.ip)}</small></div>
+      ${d.trusted ? '' : `<button class="primary" style="width:auto;padding:8px 12px" onclick="deviceAction('approve','${d.id}')">Approve</button>`}
+      ${d.id === deviceId ? '' : `<button style="width:auto;padding:8px 12px" onclick="deviceAction('remove','${d.id}')">✕</button>`}
+    </div>`).join('') || '<small>No devices yet.</small>';
+}
+
+let updateInfo = null;
+
+function showUpdate(info) {
+  updateInfo = info;
+  const text = document.getElementById('updateText');
+  const btn = document.getElementById('updateBtn');
+  if (info.available && info.installable) {
+    text.textContent = `You have v${info.current}. v${info.latest} is out!`;
+    btn.textContent = 'Update now';
+  } else if (info.available) {
+    text.textContent = `You have v${info.current}. v${info.latest} is out — install it with the setup from GitHub.`;
+    btn.textContent = 'Check again';
+  } else {
+    text.textContent = `You have v${info.current}` + (info.latest ? ' — up to date ✓' : '');
+    btn.textContent = 'Check for updates';
+  }
+}
+
+async function loadUpdate() {
+  const res = await api('/api/update');
+  if (res.ok) showUpdate(await res.json());
+}
+
+async function updateAction() {
+  if (updateInfo && updateInfo.available && updateInfo.installable) {
+    if (!confirm('Update Zephyr now? It restarts and comes back in about a minute with a new link (your bot DMs it).')) return;
+    const res = await api('/api/update/install', 'POST');
+    toast(res.ok ? 'Updating… see you in a minute' : 'Update failed');
+    return;
+  }
+  document.getElementById('updateText').textContent = 'Checking…';
+  const res = await api('/api/update/check', 'POST');
+  if (!res.ok) { document.getElementById('updateText').textContent = "Couldn't reach GitHub"; return; }
+  showUpdate(await res.json());
+}
+
+async function loadRemote() {
+  loadDevices();
+  loadUpdate();
+  clearTimeout(remoteTimer);
+  const res = await api('/api/remote');
+  if (!res.ok) return;
+  const r = await res.json();
+  const btn = document.getElementById('remoteBtn');
+  btn.textContent = r.enabled ? 'Turn off' : 'Turn on';
+  btn.className = r.enabled ? 'plain' : 'primary';
+  document.getElementById('remoteInfo').style.display = r.enabled ? 'block' : 'none';
+  const labels = { downloading: 'Downloading the tunnel (first time only)...', connecting: 'Connecting...', reconnecting: 'Reconnecting...', on: '🟢 Online. Open this link from anywhere:' };
+  document.getElementById('remoteStatus').textContent = labels[r.status] || r.status;
+  document.getElementById('remoteUrl').textContent = r.url || '';
+  document.getElementById('remoteUrl').style.display = r.url ? 'block' : 'none';
+  document.getElementById('botState').textContent = r.botStatus && r.botStatus !== 'ok'
+    ? '⚠️ ' + r.botStatus
+    : (r.bot ? '✅ Your bot sends the link. Save again to change it.' : '');
+  document.getElementById('webhookInput').placeholder = r.webhook ? 'Webhook saved ✓ (paste a new one to replace)' : 'https://discord.com/api/webhooks/...';
+  if (r.enabled && !r.url && document.getElementById('settingsBox').style.display !== 'none')
+    remoteTimer = setTimeout(loadRemote, 2000);
+}
+
+async function toggleRemote() {
+  const on = document.getElementById('remoteBtn').textContent === 'Turn on';
+  if (!on && location.hostname.endsWith('trycloudflare.com') && !confirm('You are connected through the remote link. Turning it off will disconnect you. Continue?')) return;
+  await api('/api/remote/' + (on ? 'on' : 'off'), 'POST');
+  loadRemote();
+}
+
+function copyRemote() {
+  const text = document.getElementById('remoteUrl').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Link copied ✓'), () => toast('Long-press the link to copy it'));
+}
+
+async function saveBot() {
+  const token = document.getElementById('botToken').value.trim();
+  const channel = document.getElementById('botChannel').value.trim();
+  if (!token || !channel) { toast('Fill in the bot token and channel ID'); return; }
+  toast('Testing your bot...');
+  const res = await fetch('/api/remote/bot?' + auth(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, channel })
+  });
+  if (res.ok) {
+    document.getElementById('botToken').value = '';
+    document.getElementById('botChannel').value = '';
+    toast('Bot connected ✓ check your DMs');
+  } else {
+    alert((await res.text()).replace(/^"|"$/g, ''));
+  }
+  loadRemote();
+}
+
+async function saveWebhook() {
+  const input = document.getElementById('webhookInput');
+  const res = await fetch('/api/remote/webhook?' + auth(), { method: 'POST', body: input.value.trim() });
+  toast(res.ok ? 'Webhook saved ✓' : 'That is not a Discord webhook link');
+  if (res.ok) input.value = '';
+  loadRemote();
+}
+
+async function changePin() {
+  const a = document.getElementById('newPin').value.trim();
+  const b = document.getElementById('newPin2').value.trim();
+  if (a.length < 4) { toast('PIN must be at least 4 characters'); return; }
+  if (a !== b) { toast('PINs don\'t match'); return; }
+  const res = await fetch('/api/pin/change?' + auth(), { method: 'POST', body: a });
+  if (!res.ok) { toast('Could not change PIN'); return; }
+  pin = a;
+  localStorage.setItem('pin', pin);
+  document.getElementById('newPin').value = '';
+  document.getElementById('newPin2').value = '';
+  toggleSettings();
+  toast('PIN changed ✓');
+}
+
+async function load() {
+  if (!pin) { showPin(true); return; }
+
+  const res = await api('/api/apps');
+  if (res.status === 423 || res.status === 403) return;
+  if (res.status === 401) {
+    localStorage.removeItem('pin');
+    pin = '';
+    toast('Wrong PIN');
+    showPin(true);
+    return;
+  }
+
+  showPin(false);
+  localStorage.setItem('pin', pin);
+  apps = await res.json();
+  render();
+
+  const info = await (await api('/api/info')).json();
+  document.getElementById('info').innerHTML = 'PC MAC: ' + escapeHtml(info.mac) + ' · <a class="link" onclick="toggleSettings()">Settings</a>';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function render() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = apps
+    .filter(a => a.name.toLowerCase().includes(query))
+    .map(a => `
+      <button class="app" onclick="launch('${a.id}')">
+        <img src="/api/icon/${a.id}?${auth()}" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span>${escapeHtml(a.name)}</span>
+      </button>`)
+    .join('');
+}
+
+async function launch(id) {
+  const app = apps.find(a => a.id === id);
+  let res = await api('/api/launch/' + id, 'POST');
+  if (!res.ok && app) {
+    const fresh = await api('/api/apps');
+    if (fresh.ok) {
+      apps = await fresh.json();
+      render();
+      const again = apps.find(a => a.name === app.name);
+      if (again) res = await api('/api/launch/' + again.id, 'POST');
+    }
+  }
+  toast(res.ok ? 'Opening ' + app.name : 'Failed to open');
+}
+
+async function power(action) {
+  if (action !== 'lock' && !confirm(action.charAt(0).toUpperCase() + action.slice(1) + ' PC?')) return;
+  const res = await api('/api/power/' + action, 'POST');
+  toast(res.ok ? action + ' sent' : res.status === 401 ? 'Enter PIN first' : 'Failed');
+}
+
+let currentTab = 'apps';
+let screenIndex = 0;
+
+let filesLoaded = false;
+let fileItems = [];
+
+function size(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+
+async function openFolder(path) {
+  const res = await api('/api/files/list?path=' + encodeURIComponent(path));
+  if (!res.ok) { toast("Can't open that folder"); return; }
+  filesLoaded = true;
+  const data = await res.json();
+  document.getElementById('filePath').textContent = data.path || 'Places';
+  const up = data.path ? [{ name: '⬅️ Back', path: data.parent || '', folder: true, back: true }] : [];
+  fileItems = up.concat(data.items);
+  document.getElementById('fileList').innerHTML = fileItems.map((f, i) => `
+    <div class="row" onclick="fileTap(${i})">
+      <div style="font-size:22px">${f.back ? '' : f.folder ? (data.path ? '📁' : '') : '📄'}</div>
+      <div class="txt"><b>${escapeHtml(f.name)}</b>${f.folder ? '' : `<small>${size(f.size)} · ${new Date(f.modified).toLocaleDateString()}</small>`}</div>
+      ${f.folder ? '' : `<button style="width:auto;padding:8px 12px" onclick="event.stopPropagation();fileOpenOnPc(${i})">🖥️</button>`}
+    </div>`).join('') || '<small>Empty folder</small>';
+  window.scrollTo(0, 0);
+}
+
+function fileTap(i) {
+  const path = fileItems[i].path;
+  if (fileItems[i].folder) { openFolder(path); return; }
+  const a = document.createElement('a');
+  a.href = '/api/files/download?path=' + encodeURIComponent(path) + '&' + auth();
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast('Downloading…');
+}
+
+async function fileOpenOnPc(i) {
+  const res = await api('/api/files/open?path=' + encodeURIComponent(fileItems[i].path), 'POST');
+  toast(res.ok ? 'Opened on PC' : 'Failed');
+}
+
+async function uploadFiles(list) {
+  const status = document.getElementById('uploadStatus');
+  const chunk = 8 * 1024 * 1024;
+  for (const file of list) {
+    let name = file.name;
+    for (let offset = 0; offset < file.size || offset === 0; offset += chunk) {
+      status.innerHTML = `<small>Sending ${escapeHtml(file.name)}… ${Math.round(offset / Math.max(file.size, 1) * 100)}%</small>`;
+      const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk) });
+      if (!res.ok) { status.innerHTML = `<small>❌ ${escapeHtml(file.name)} failed</small>`; return; }
+      name = (await res.json()).name;
+      if (file.size === 0) break;
+    }
+  }
+  status.innerHTML = `<small>✅ Sent ${list.length} file${list.length > 1 ? 's' : ''}</small>`;
+  document.getElementById('uploadInput').value = '';
+  if (document.getElementById('filePath').textContent.endsWith('Zephyr')) openFolder(document.getElementById('filePath').textContent);
+}
+
+async function clipGet() {
+  const res = await api('/api/clipboard');
+  if (!res.ok) { toast('Failed'); return; }
+  const text = await res.text();
+  document.getElementById('clipText').value = text;
+  try { await navigator.clipboard.writeText(text); toast('Copied to your phone ✓'); }
+  catch { toast(text ? 'Got it — tap and hold to copy' : 'PC clipboard is empty'); }
+}
+
+async function clipSend() {
+  const res = await fetch('/api/clipboard?' + auth(), { method: 'POST', body: document.getElementById('clipText').value });
+  toast(res.ok ? 'On your PC clipboard ✓ (Ctrl+V)' : 'Failed');
+}
+
+function tab(name) {
+  currentTab = name;
+  ['apps', 'running', 'screen', 'files'].forEach(t => {
+    document.getElementById('view-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('tab-' + t).className = t === name ? 'on' : '';
+  });
+  if (name === 'running') loadRunning();
+  if (name === 'files' && !filesLoaded) openFolder('');
+  if (name === 'screen') {
+    api('/api/wake', 'POST');
+    startScreen();
+    checkLock();
+  } else {
+    stopStream();
+  }
+}
+
+async function loadRunning() {
+  const res = await api('/api/running');
+  if (!res.ok) return;
+  const list = await res.json();
+  const row = a => `
+    <div class="row">
+      <img src="/api/running/icon/${a.id}?${auth()}" style="width:32px;height:32px" onerror="this.style.visibility='hidden'">
+      <div class="txt"><b>${escapeHtml(a.name)}</b><small>${escapeHtml(a.title)}</small></div>
+      <button onclick="closeApp('${a.id}', '${escapeHtml(a.name).replace(/'/g, '')}')">Close</button>
+    </div>`;
+  const open = list.filter(a => a.hasWindow);
+  const background = list.filter(a => !a.hasWindow);
+  document.getElementById('runningList').innerHTML =
+    (open.length ? '<div class="label">Open windows</div>' + open.map(row).join('') : '') +
+    (background.length ? '<div class="label">Running in the background</div>' + background.map(row).join('') : '') ||
+    '<div class="info">No open apps</div>';
+}
+
+async function closeApp(id, name) {
+  if (!confirm('Close ' + name + '?')) return;
+  toast('Closing ' + name + '...');
+  const res = await api('/api/close/' + id, 'POST');
+  toast(res.ok ? name + ' closed' : 'Could not fully close ' + name);
+  loadRunning();
+}
+
+let mouseOn = false;
+let zoom = 1, panX = 0, panY = 0;
+let gesture = null;
+let lastTap = { t: 0, x: 0, y: 0 };
+let mouseQueue = Promise.resolve();
+let moveBusy = false;
+let pendingMove = null;
+
+async function startScreen() {
+  const res = await api('/api/screens');
+  const info = await res.json();
+  if (screenIndex >= info.count) screenIndex = 0;
+  document.getElementById('screenButtons').innerHTML = info.count > 1
+    ? Array.from({ length: info.count }, (_, i) => `<button class="${i === screenIndex ? 'on' : ''}" onclick="pickScreen(${i})">Screen ${i + 1}</button>`).join('')
+    : '';
+  playStream();
+}
+
+let lockTimer = null;
+let audioOn = false;
+let audioCtx = null;
+let audioWs = null;
+let audioNext = 0;
+let silentTag = null;
+
+function silentWav() {
+  const rate = 8000, n = 800;
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+
+function toggleAudio() {
+  if (audioOn) stopAudio();
+  else startAudio();
+}
+
+function startAudio() {
+  audioOn = true;
+  document.getElementById('audioBtn').textContent = '🔊';
+  document.getElementById('audioBtn').className = 'on';
+  if (!silentTag) {
+    silentTag = new Audio(silentWav());
+    silentTag.loop = true;
+  }
+  silentTag.play().catch(() => {});
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx.resume();
+  connectAudio();
+}
+
+function connectAudio() {
+  if (!audioOn) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  audioWs = new WebSocket(`${proto}://${location.host}/api/audio?${auth()}`);
+  audioWs.binaryType = 'arraybuffer';
+  audioWs.onmessage = e => playChunk(e.data);
+  audioWs.onclose = () => { if (audioOn) setTimeout(connectAudio, 1500); };
+}
+
+function stopAudio() {
+  audioOn = false;
+  document.getElementById('audioBtn').textContent = '🔇';
+  document.getElementById('audioBtn').className = '';
+  if (audioWs) audioWs.close();
+  audioWs = null;
+  if (silentTag) silentTag.pause();
+}
+
+function playChunk(data) {
+  const pcm = new Int16Array(data);
+  const frames = pcm.length / 2;
+  const buffer = audioCtx.createBuffer(2, frames, 24000);
+  const left = buffer.getChannelData(0), right = buffer.getChannelData(1);
+  for (let i = 0; i < frames; i++) {
+    left[i] = pcm[2 * i] / 32768;
+    right[i] = pcm[2 * i + 1] / 32768;
+  }
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  if (audioNext < now + 0.04 || audioNext > now + 0.6) audioNext = now + 0.15;
+  source.start(audioNext);
+  audioNext += buffer.duration;
+}
+
+async function wakePc() {
+  await api('/api/wake', 'POST');
+  toast('Waking screens…');
+  setTimeout(playStream, 800);
+}
+
+async function checkLock() {
+  clearTimeout(lockTimer);
+  if (currentTab !== 'screen' || document.hidden) return;
+  const res = await api('/api/lockstate');
+  if (res.ok) {
+    const s = await res.json();
+    document.getElementById('lockBanner').style.display = s.locked ? 'block' : 'none';
+    if (s.locked !== pcLocked) {
+      pcLocked = s.locked;
+      if (hdWanted) playStream();
+    }
+  }
+  lockTimer = setTimeout(checkLock, 3000);
+}
+
+let hdWanted = localStorage.getItem('hd') !== 'off' && 'VideoDecoder' in window;
+let pcLocked = false;
+let videoWs = null;
+let decoder = null;
+let frameTime = 0;
+let hdFailures = 0;
+
+function hdActive() {
+  return hdWanted && !pcLocked && hdFailures < 3;
+}
+
+function screenEl() {
+  return hdActive() ? document.getElementById('screenCanvas') : document.getElementById('screenImg');
+}
+
+function updateHdButton() {
+  const btn = document.getElementById('hdBtn');
+  if (!btn) return;
+  btn.textContent = hdWanted ? 'HD' : 'SD';
+  btn.className = hdActive() ? 'on' : '';
+}
+
+function toggleHd() {
+  if (!('VideoDecoder' in window)) { toast('HD needs a newer iOS / browser'); return; }
+  hdWanted = !hdWanted;
+  hdFailures = 0;
+  localStorage.setItem('hd', hdWanted ? 'on' : 'off');
+  playStream();
+}
+
+function quality() {
+  const host = location.hostname;
+  return /^(192\.168|10\.|172\.(1[6-9]|2\d|3[01])\.|localhost)/.test(host) ? 'high' : 'normal';
+}
+
+function playStream() {
+  stopStream();
+  updateHdButton();
+  const img = document.getElementById('screenImg');
+  const canvas = document.getElementById('screenCanvas');
+  if (hdActive()) {
+    img.style.display = 'none';
+    canvas.style.display = 'block';
+    startVideo();
+  } else {
+    canvas.style.display = 'none';
+    img.style.display = 'block';
+    img.src = '/api/stream/' + screenIndex + '?' + auth() + '&t=' + Date.now();
+  }
+}
+
+function stopStream() {
+  document.getElementById('screenImg').removeAttribute('src');
+  if (videoWs) { videoWs.onclose = null; videoWs.close(); videoWs = null; }
+  if (decoder && decoder.state !== 'closed') decoder.close();
+  decoder = null;
+}
+
+function codecFromSps(bytes) {
+  for (let i = 0; i + 7 < bytes.length; i++) {
+    if (bytes[i] === 0 && bytes[i + 1] === 0 && bytes[i + 2] === 1 && (bytes[i + 3] & 0x1f) === 7) {
+      const hex = b => b.toString(16).padStart(2, '0');
+      return 'avc1.' + hex(bytes[i + 4]) + hex(bytes[i + 5]) + hex(bytes[i + 6]);
+    }
+  }
+  return null;
+}
+
+function startVideo() {
+  const canvas = document.getElementById('screenCanvas');
+  const ctx = canvas.getContext('2d');
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/api/video/${screenIndex}?quality=${quality()}&${auth()}`);
+  ws.binaryType = 'arraybuffer';
+  videoWs = ws;
+  let gotFrame = false;
+  let waitKey = false;
+
+  decoder = new VideoDecoder({
+    output: frame => {
+      if (canvas.width !== frame.displayWidth) {
+        canvas.width = frame.displayWidth;
+        canvas.height = frame.displayHeight;
+      }
+      ctx.drawImage(frame, 0, 0);
+      frame.close();
+      gotFrame = true;
+      hdFailures = 0;
+    },
+    error: () => { if (ws === videoWs) { hdFailures++; playStream(); } }
+  });
+
+  ws.onmessage = e => {
+    const data = new Uint8Array(e.data);
+    const key = data[0] === 1;
+    const body = data.subarray(1);
+    if (decoder.state === 'unconfigured') {
+      if (!key) return;
+      const codec = codecFromSps(body);
+      if (!codec) return;
+      decoder.configure({ codec, optimizeForLatency: true, hardwareAcceleration: 'prefer-hardware' });
+    }
+    if (decoder.decodeQueueSize > 8 && !key) waitKey = true;
+    if (waitKey && !key) return;
+    if (key) waitKey = false;
+    frameTime += 16666;
+    decoder.decode(new EncodedVideoChunk({ type: key ? 'key' : 'delta', timestamp: frameTime, data: body }));
+  };
+
+  ws.onclose = () => {
+    if (ws !== videoWs || currentTab !== 'screen') return;
+    if (!gotFrame) hdFailures++;
+    setTimeout(() => { if (ws === videoWs) playStream(); }, 1000);
+  };
+}
+
+function pickScreen(i) {
+  screenIndex = i;
+  startScreen();
+}
+
+function toggleMouse() {
+  mouseOn = !mouseOn;
+  const btn = document.getElementById('mouseBtn');
+  btn.textContent = 'Mouse: ' + (mouseOn ? 'on' : 'off');
+  btn.className = mouseOn ? 'on' : '';
+}
+
+let autoFull = false;
+matchMedia('(orientation: landscape)').addEventListener('change', e => {
+  const wrap = document.getElementById('screenWrap');
+  if (e.matches && currentTab === 'screen' && !wrap.classList.contains('full')) {
+    autoFull = true;
+    toggleFull();
+  } else if (!e.matches && autoFull) {
+    autoFull = false;
+    if (wrap.classList.contains('full')) toggleFull();
+  }
+  setTimeout(fitToViewport, 300);
+});
+
+if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js');
+
+function toggleFull() {
+  document.getElementById('screenWrap').classList.toggle('full');
+  setZoom(1, 0, 0);
+  fitToViewport();
+}
+
+function scrollPc(dir) {
+  api('/api/mouse/scroll?amount=' + (dir * 360), 'POST');
+}
+
+let kbQueue = Promise.resolve();
+let kbBuffer = '';
+let kbTimer = null;
+
+let fullBeforeKb = false;
+
+function fitToViewport() {
+  const wrap = document.getElementById('screenWrap');
+  const vv = window.visualViewport;
+  if (!wrap.classList.contains('full') || !vv) {
+    wrap.style.height = '';
+    wrap.style.top = '';
+    return;
+  }
+  wrap.style.height = vv.height + 'px';
+  wrap.style.top = vv.offsetTop + 'px';
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fitToViewport);
+  window.visualViewport.addEventListener('scroll', fitToViewport);
+}
+
+function toggleKeyboard() {
+  const panel = document.getElementById('kbPanel');
+  const wrap = document.getElementById('screenWrap');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  document.getElementById('kbBtn').className = open ? 'on' : '';
+  const input = document.getElementById('kbInput');
+  if (open) {
+    fullBeforeKb = wrap.classList.contains('full');
+    wrap.classList.add('full');
+    setZoom(1, 0, 0);
+    fitToViewport();
+    input.focus();
+  } else {
+    input.blur();
+    if (!fullBeforeKb) wrap.classList.remove('full');
+    fitToViewport();
+  }
+}
+
+function flushTyping() {
+  kbTimer = null;
+  if (!kbBuffer) return;
+  const text = kbBuffer;
+  kbBuffer = '';
+  kbQueue = kbQueue.then(() => fetch('/api/keys/type?' + auth(), { method: 'POST', body: text }));
+}
+
+function typeText(text) {
+  kbBuffer += text;
+  if (!kbTimer) kbTimer = setTimeout(flushTyping, 40);
+}
+
+function key(name) {
+  flushTyping();
+  kbQueue = kbQueue.then(() => api('/api/keys/press?key=' + encodeURIComponent(name), 'POST'));
+}
+
+const kbInput = document.getElementById('kbInput');
+const SENTINEL = '\u200B';
+let kbText = '';
+
+function resetKbInput() {
+  kbText = '';
+  kbInput.value = SENTINEL;
+}
+
+function keepSentinel() {
+  if (!kbInput.value.startsWith(SENTINEL)) {
+    kbInput.value = SENTINEL + kbInput.value.replace(/\u200B/g, '');
+    kbInput.setSelectionRange(kbInput.value.length, kbInput.value.length);
+  }
+}
+
+kbInput.addEventListener('focus', () => {
+  if (!kbInput.value) resetKbInput();
+  setTimeout(() => kbInput.setSelectionRange(kbInput.value.length, kbInput.value.length), 0);
+});
+
+kbInput.addEventListener('beforeinput', e => {
+  if (e.inputType.startsWith('delete') && kbText === '') {
+    e.preventDefault();
+    key('backspace');
+  }
+});
+
+kbInput.addEventListener('input', () => {
+  const cur = kbInput.value.replace(/\u200B/g, '');
+  let same = 0;
+  while (same < cur.length && same < kbText.length && cur[same] === kbText[same]) same++;
+  const removed = kbText.length - same;
+  for (let i = 0; i < removed; i++) key('backspace');
+  if (cur.length > same) typeText(cur.slice(same));
+  kbText = cur;
+  keepSentinel();
+});
+
+kbInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    key('enter');
+    resetKbInput();
+  }
+});
+
+function backspaceButton() {
+  key('backspace');
+  if (kbText) {
+    kbText = Array.from(kbText).slice(0, -1).join('');
+    kbInput.value = SENTINEL + kbText;
+  }
+}
+
+resetKbInput();
+
+function screenPoint(cx, cy) {
+  const img = screenEl();
+  const r = img.getBoundingClientRect();
+  const nw = img.naturalWidth || img.width || r.width;
+  const nh = img.naturalHeight || img.height || r.height;
+  const scale = Math.min(r.width / nw, r.height / nh);
+  const w = nw * scale;
+  const h = nh * scale;
+  const x = (cx - r.left - (r.width - w) / 2) / w;
+  const y = (cy - r.top - (r.height - h) / 2) / h;
+  if (x < 0 || x > 1 || y < 0 || y > 1) return null;
+  return { x, y };
+}
+
+function mouseUrl(action, p, button) {
+  let url = '/api/mouse/' + action + '?display=' + screenIndex;
+  if (p) url += '&x=' + p.x.toFixed(4) + '&y=' + p.y.toFixed(4);
+  if (button) url += '&button=' + button;
+  return url;
+}
+
+function mouseSend(action, p, button) {
+  mouseQueue = mouseQueue.then(() => api(mouseUrl(action, p, button), 'POST'));
+}
+
+function mouseMove(p) {
+  pendingMove = p;
+  if (moveBusy) return;
+  moveBusy = true;
+  const next = pendingMove;
+  pendingMove = null;
+  mouseQueue = mouseQueue.then(() => api(mouseUrl('move', next), 'POST')).then(() => {
+    moveBusy = false;
+    if (pendingMove) mouseMove(pendingMove);
+  });
+}
+
+function showDot(cx, cy, right) {
+  const wrap = document.getElementById('screenView');
+  const r = wrap.getBoundingClientRect();
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (right ? ' right' : '');
+  dot.style.left = (cx - r.left) + 'px';
+  dot.style.top = (cy - r.top) + 'px';
+  wrap.appendChild(dot);
+  setTimeout(() => dot.remove(), 450);
+}
+
+function setZoom(z, x, y) {
+  const view = document.getElementById('screenView').getBoundingClientRect();
+  zoom = Math.min(5, Math.max(1, z));
+  panX = Math.min(0, Math.max(view.width * (1 - zoom), x));
+  panY = Math.min(0, Math.max(view.height * (1 - zoom), y));
+  if (zoom === 1) { panX = 0; panY = 0; }
+  const t = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  document.getElementById('screenImg').style.transform = t;
+  document.getElementById('screenCanvas').style.transform = t;
+}
+
+function twoInfo(t) {
+  const a = t[0], b = t[1];
+  return {
+    dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+    mx: (a.clientX + b.clientX) / 2,
+    my: (a.clientY + b.clientY) / 2
+  };
+}
+
+const screenView = document.getElementById('screenView');
+
+screenView.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches;
+
+  if (t.length === 2) {
+    if (gesture && gesture.timer) clearTimeout(gesture.timer);
+    if (gesture && gesture.dragging) mouseSend('up', null, 'left');
+    const info = twoInfo(t);
+    const view = screenView.getBoundingClientRect();
+    gesture = { two: true, start: info, zoom, panX, panY, scrollAcc: 0, lastMy: info.my, view };
+    return;
+  }
+  if (t.length !== 1 || (gesture && gesture.two)) return;
+
+  const x = t[0].clientX, y = t[0].clientY;
+  const now = Date.now();
+  const p = screenPoint(x, y);
+  const doubleTap = now - lastTap.t < 350 && Math.hypot(x - lastTap.x, y - lastTap.y) < 40;
+  gesture = { x, y, t: now, moved: false, dragging: false, done: false, timer: null };
+
+  if (!mouseOn || !p) return;
+
+  if (doubleTap) {
+    gesture.dragging = true;
+    mouseSend('down', p, 'left');
+    return;
+  }
+
+  gesture.timer = setTimeout(() => {
+    if (!gesture || gesture.moved || gesture.two) return;
+    gesture.done = true;
+    showDot(x, y, true);
+    mouseSend('click', p, 'right');
+  }, 550);
+}, { passive: false });
+
+screenView.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!gesture) return;
+  const t = e.touches;
+
+  if (gesture.two && t.length === 2) {
+    const info = twoInfo(t);
+    const ratio = info.dist / gesture.start.dist;
+    if (Math.abs(ratio - 1) > 0.08 || gesture.zoom > 1 || zoom > 1) {
+      const z = Math.min(5, Math.max(1, gesture.zoom * ratio));
+      const ox = gesture.start.mx - gesture.view.left;
+      const oy = gesture.start.my - gesture.view.top;
+      const nx = ox - (ox - gesture.panX) * (z / gesture.zoom) + (info.mx - gesture.start.mx);
+      const ny = oy - (oy - gesture.panY) * (z / gesture.zoom) + (info.my - gesture.start.my);
+      setZoom(z, nx, ny);
+    } else if (mouseOn) {
+      gesture.scrollAcc += info.my - gesture.lastMy;
+      while (Math.abs(gesture.scrollAcc) >= 25) {
+        const dir = gesture.scrollAcc > 0 ? 1 : -1;
+        gesture.scrollAcc -= dir * 25;
+        api('/api/mouse/scroll?amount=' + (dir * 120), 'POST');
+      }
+    }
+    gesture.lastMy = info.my;
+    return;
+  }
+
+  if (t.length !== 1 || gesture.two) return;
+  const x = t[0].clientX, y = t[0].clientY;
+  if (!gesture.moved && Math.hypot(x - gesture.x, y - gesture.y) > 8) {
+    gesture.moved = true;
+    if (gesture.timer) clearTimeout(gesture.timer);
+  }
+  if (!mouseOn || !gesture.moved) return;
+  const p = screenPoint(x, y);
+  if (p) mouseMove(p);
+}, { passive: false });
+
+screenView.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (!gesture) return;
+
+  if (gesture.two) {
+    if (e.touches.length === 0) gesture = null;
+    return;
+  }
+
+  if (gesture.timer) clearTimeout(gesture.timer);
+  const ch = e.changedTouches[0];
+  const p = screenPoint(ch.clientX, ch.clientY);
+
+  if (gesture.dragging) {
+    mouseSend('up', null, 'left');
+    if (!gesture.moved) showDot(ch.clientX, ch.clientY, false);
+    lastTap = { t: 0, x: 0, y: 0 };
+  } else if (!gesture.moved && !gesture.done && mouseOn && p) {
+    showDot(ch.clientX, ch.clientY, false);
+    mouseSend('click', p, 'left');
+    lastTap = { t: Date.now(), x: ch.clientX, y: ch.clientY };
+  }
+  gesture = null;
+}, { passive: false });
+
+screenView.addEventListener('contextmenu', e => e.preventDefault());
+
+document.addEventListener('visibilitychange', () => {
+  if (currentTab !== 'screen') return;
+  if (document.hidden) stopStream();
+  else playStream();
+});
+
+function toast(text) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+load();
+</script>
+</body>
+</html>
