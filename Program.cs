@@ -131,7 +131,8 @@ app.MapGet("/api/devices", () => devices.All().Select(d => new
     ip = d.Ip,
     lastSeen = d.LastSeen,
     firstSeen = d.FirstSeen,
-    trusted = d.Trusted
+    trusted = d.Trusted,
+    code = d.Trusted ? "" : d.Code
 }));
 
 app.MapGet("/api/files/list", (string? path) =>
@@ -583,7 +584,7 @@ app.Map("/api/video/{index:int}", async (HttpContext context, int index, string?
     await video.Serve(socket, index, bitrate, context.RequestAborted);
 });
 
-app.MapGet("/api/info", () => new { mac = network.MacAddress, ip = network.LocalIp });
+app.MapGet("/api/info", () => new { mac = network.MacAddress, ip = network.LocalIp, name = Environment.MachineName, version = updates.Current.ToString() });
 
 scanner.Refresh();
 app.Start();

@@ -5,204 +5,294 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="#0B0D12">
 <meta name="apple-mobile-web-app-title" content="Zephyr Remote">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" href="/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Zephyr Remote</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { background: #0f1115; color: #e8e8ea; font-family: system-ui, sans-serif; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); }
-h1 { font-size: 20px; margin-bottom: 12px; }
-.power { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-.power button { background: #1c1f26; color: #e8e8ea; border: none; border-radius: 12px; padding: 12px 0; font-size: 13px; }
-.power button.danger { background: #3a1d1f; color: #ff8a8a; }
-input { width: 100%; padding: 12px; border-radius: 12px; border: none; background: #1c1f26; color: #e8e8ea; font-size: 16px; margin-bottom: 16px; outline: none; }
-.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; }
-.app { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; color: inherit; }
-.app:active img { transform: scale(0.9); }
-.app img { width: 56px; height: 56px; border-radius: 14px; background: #1c1f26; padding: 10px; transition: transform .1s; }
-.app span { font-size: 11px; text-align: center; line-height: 1.2; max-height: 2.4em; overflow: hidden; word-break: break-word; }
-.info { margin-top: 24px; font-size: 11px; color: #6b6f7a; text-align: center; }
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2a2e38; padding: 10px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
-.toast.show { opacity: 1; }
-.card { background: #1c1f26; border-radius: 14px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
-.card b { font-size: 17px; }
-.card small { color: #8b8f99; font-size: 13px; }
-.card input { margin: 0; background: #0f1115; }
-.primary { background: #3b82f6; color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 15px; }
-.plain { background: none; color: #8b8f99; border: none; padding: 6px; font-size: 14px; }
-.link { color: #6b9cff; text-decoration: none; cursor: pointer; }
-.label { color: #8b8f99; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; margin: 14px 4px 8px; }
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: #1c1f26; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
-.tabs button { background: none; border: none; color: #9a9ea8; padding: 10px 0; border-radius: 9px; font-size: 14px; }
-.tabs button.on { background: #3b82f6; color: #fff; }
-.row { display: flex; align-items: center; gap: 12px; background: #1c1f26; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
-.row .txt { flex: 1; min-width: 0; }
-.row b { display: block; font-size: 15px; }
-.row small { display: block; color: #8b8f99; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row button { background: #3a1d1f; color: #ff8a8a; border: none; border-radius: 10px; padding: 8px 14px; font-size: 13px; }
-.screens { display: flex; gap: 6px; margin-bottom: 10px; }
-.screens button { flex: 1; background: #1c1f26; color: #e8e8ea; border: none; border-radius: 10px; padding: 10px 0; }
-.screens button.on { background: #3b82f6; }
+:root { --bg: #0B0D12; --card: #151922; --card2: #1B2030; --line: #232938; --line2: #1E2330; --text: #EEF1F7; --muted: #8A93A6; --soft: #AEB6C6; --accent: #3D6FF0; --accentSoft: #1D3A7A; --accentText: #6E9BFF; --green: #3DD68C; --red: #FF8C8C; --redBg: #22141A; }
+body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, sans-serif; padding: 0 20px 112px; padding-top: max(20px, env(safe-area-inset-top)); -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+svg { flex: none; }
+input, textarea { width: 100%; padding: 13px 15px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: 400 16px Inter, system-ui, sans-serif; outline: none; }
+input:focus, textarea:focus { border-color: var(--accent); }
+.top { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 14px; }
+.eyebrow { display: block; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; color: var(--muted); text-transform: uppercase; }
+.title { display: block; font-size: 26px; font-weight: 700; letter-spacing: -0.4px; margin-top: 5px; }
+.iconbtn { width: 44px; height: 44px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; color: #C9D0DD; }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: var(--card); color: var(--soft); font-size: 13px; font-weight: 500; }
+.pill.ok { background: #10251B; color: #5BE3A0; font-weight: 600; }
+.pill.ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.power { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.power button, .tile { height: 72px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); color: #DDE3EE; font-size: 12px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; }
+.power button:active, .tile:active { transform: scale(0.96); }
+.power button.danger { border-color: #3A1E22; background: var(--redBg); color: var(--red); font-weight: 600; }
+.search { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); color: var(--muted); margin-bottom: 18px; }
+.search input { border: none; background: none; padding: 0; height: 100%; }
+.section { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 2px 12px; }
+.section b { font-size: 17px; font-weight: 700; }
+.section span { font-size: 13px; color: var(--muted); }
+.label { color: var(--muted); font-size: 12.5px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; margin: 18px 4px 8px; }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 10px; }
+.app { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; color: #DDE3EE; font-size: 11.5px; font-weight: 500; }
+.app .ico { width: 62px; height: 62px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; transition: transform .1s; }
+.app .ico img { width: 34px; height: 34px; }
+.app:active .ico { transform: scale(0.9); }
+.app > span:last-child { max-width: 76px; text-align: center; line-height: 1.25; max-height: 2.5em; overflow: hidden; word-break: break-word; }
+.list { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line2); min-height: 60px; }
+.row:last-child { border-bottom: none; }
+.row .ico { width: 40px; height: 40px; border-radius: 12px; background: var(--card2); display: flex; align-items: center; justify-content: center; flex: none; color: var(--soft); }
+.row .ico img { width: 26px; height: 26px; }
+.row .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.row b { font-size: 15px; font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.row small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .x { width: 44px; height: 44px; border-radius: 12px; border: none; background: var(--redBg); color: var(--red); display: flex; align-items: center; justify-content: center; flex: none; }
+.row .x.soft { background: var(--card2); color: #C9D0DD; }
+.row .tag { font-size: 12px; color: #5BE3A0; font-weight: 600; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.card b { font-size: 16px; font-weight: 600; }
+.card small { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.card input, .card textarea { background: var(--bg); }
+.primary { background: var(--accent); color: #fff; border: none; border-radius: 14px; padding: 13px 16px; font-size: 15px; font-weight: 600; }
+.secondary { background: var(--card2); color: #DDE3EE; border: 1px solid #2C3448; border-radius: 14px; padding: 12px 16px; font-size: 15px; font-weight: 500; }
+.plain { background: none; color: var(--accentText); border: none; padding: 8px; font-size: 14.5px; font-weight: 500; }
+.link { color: var(--accentText); text-decoration: none; cursor: pointer; }
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: 13px; word-break: break-all; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; user-select: all; }
+.big2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.big2 button { height: 92px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 14px; }
+.big2 button.go { background: var(--accent); border-color: var(--accent); color: #fff; }
+.big2 button.on { border-color: var(--accent); background: var(--accentSoft); }
+.path { color: var(--muted); font-size: 12.5px; margin: 0 4px 10px; word-break: break-all; }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); background: rgba(13, 16, 22, 0.94); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line2); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+nav.tabs button { background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 2px 0; }
+nav.tabs button.on { color: var(--accentText); font-weight: 600; }
+.gate .top, .gate .pills, .gate .power, .gate nav.tabs, .gate #updateBanner, .gate #view-apps, .gate #view-running, .gate #view-screen, .gate #view-files { display: none !important; }
+#pinBox { flex-direction: column; align-items: center; text-align: center; gap: 12px; padding-top: 40px; }
+.logo { width: 72px; height: 72px; border-radius: 22px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; }
+#pinBox h2 { font-size: 24px; font-weight: 700; margin-top: 8px; }
+#pinBox p { font-size: 14px; color: var(--muted); max-width: 300px; line-height: 1.45; }
+.dots { display: flex; gap: 16px; margin: 14px 0 22px; min-height: 14px; }
+.dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #3A4256; }
+.dots span.on { border-color: var(--accentText); background: var(--accentText); }
+.pad { width: 100%; max-width: 310px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 22px; }
+.pad button { height: 72px; border-radius: 36px; border: 1px solid var(--line); background: var(--card); font-size: 28px; font-weight: 500; }
+.pad button:active { background: var(--accentSoft); }
+.pad button.flat { border: none; background: none; color: var(--soft); display: flex; align-items: center; justify-content: center; }
+.pad button.ok { background: var(--accent); border-color: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; }
+.gatecard { margin-top: 40px; }
+.sheet { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; padding: max(20px, env(safe-area-inset-top)) 20px 40px; flex-direction: column; gap: 10px; }
+.sheet .head { display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; }
+.sheet .head span { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+.group { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.group > b { font-size: 15px; font-weight: 600; }
+.group small { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.group input { background: var(--bg); }
+.group .row { padding: 10px 0; min-height: 0; }
+#updateBanner { flex-direction: row; align-items: center; gap: 12px; padding: 12px 14px; background: #121A2E; border-color: #22314F; }
+#updateOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 50; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 40px; text-align: center; }
+.screenhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 10px 0 14px; }
+.screens { display: flex; padding: 4px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.screens:empty { display: none; }
+.screens button { height: 36px; padding: 0 12px; border-radius: 9px; border: none; background: none; color: var(--soft); font-size: 13px; font-weight: 500; }
+.screens button.on { background: var(--accent); color: #fff; font-weight: 600; }
 #screenWrap { position: relative; }
-#screenWrap.full { position: fixed; left: 0; right: 0; top: 0; height: 100vh; background: #000; z-index: 10; display: flex; flex-direction: column; overflow: hidden; }
-.ctrl button { min-width: 0; white-space: nowrap; overflow: hidden; }
-#screenView { position: relative; overflow: hidden; border-radius: 10px; background: #000; touch-action: none; }
+#screenWrap.full { position: fixed; left: 0; right: 0; top: 0; height: 100vh; background: #000; z-index: 35; display: flex; flex-direction: column; overflow: hidden; }
+#screenView { position: relative; overflow: hidden; border-radius: 16px; border: 1px solid var(--line); background: #000; touch-action: none; }
 #screenImg, #screenCanvas { width: 100%; display: block; transform-origin: 0 0; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
 #screenCanvas { display: none; aspect-ratio: 16 / 9; background: #000; }
-#screenWrap.full #screenView { flex: 1; height: 0; border-radius: 0; }
+#screenWrap.full #screenView { flex: 1; height: 0; border-radius: 0; border: none; }
 #screenWrap.full #screenImg, #screenWrap.full #screenCanvas { height: 100%; object-fit: contain; aspect-ratio: auto; }
-.ctrl { display: flex; gap: 6px; margin-top: 8px; }
-.ctrl button { flex: 1; background: #1c1f26; color: #e8e8ea; border: none; border-radius: 10px; padding: 10px 0; font-size: 13px; }
-.ctrl button.on { background: #3b82f6; color: #fff; }
-#screenWrap.full .ctrl { padding: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); margin: 0; }
-.keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-.keys button { background: #1c1f26; color: #e8e8ea; border: none; border-radius: 8px; padding: 10px 0; font-size: 13px; }
-.keys button:active, .ctrl button:active { background: #3b82f6; }
-#screenWrap.full #kbPanel { padding: 0 8px 8px; }
+.ctrl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.ctrl button { height: 64px; min-width: 0; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: #DDE3EE; font-size: 11.5px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; overflow: hidden; }
+.ctrl button.on { background: var(--accentSoft); border-color: var(--accent); color: #DCE6FF; }
+.ctrl button:active, .keys button:active { background: var(--accent); }
+#screenWrap.full .ctrl { display: flex; gap: 6px; margin: 0; padding: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); background: #0B0D12; }
+#screenWrap.full .ctrl button { flex: 1; height: 46px; border-radius: 12px; }
+#screenWrap.full .ctrl button span { display: none; }
+.keys { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.keys button { height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 13px; font-weight: 500; }
+#kbPanel input { margin: 10px 0 8px; }
+#screenWrap.full #kbPanel { padding: 0 8px 8px; background: #0B0D12; }
 @media (orientation: landscape) {
-  #screenWrap.full .ctrl { position: absolute; top: 0; right: 0; bottom: 0; width: calc(66px + env(safe-area-inset-right)); flex-direction: column; padding: 8px; padding-right: max(8px, env(safe-area-inset-right)); background: rgba(15,17,21,.85); z-index: 2; }
-  #screenWrap.full .ctrl button { flex: 1; font-size: 11px; padding: 0 2px; white-space: normal; }
+  #screenWrap.full .ctrl { position: absolute; top: 0; right: 0; bottom: 0; width: calc(66px + env(safe-area-inset-right)); flex-direction: column; padding: 8px; padding-right: max(8px, env(safe-area-inset-right)); background: rgba(11, 13, 18, 0.88); z-index: 2; }
+  #screenWrap.full .ctrl button { height: auto; }
   #screenWrap.full #screenView { margin-right: calc(66px + env(safe-area-inset-right)); margin-left: env(safe-area-inset-left); }
   #screenWrap.full #kbPanel { margin-right: calc(66px + env(safe-area-inset-right)); }
 }
-.dot { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 2px solid #3b82f6; pointer-events: none; animation: ping .4s ease-out forwards; }
+.gestures { margin-top: 14px; padding: 14px 16px; border-radius: 16px; background: #121A2E; border: 1px solid #22314F; display: flex; flex-direction: column; gap: 10px; }
+.gestures b { font-size: 14px; color: #C9D8FF; font-weight: 600; }
+.gestures div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; font-size: 13px; color: var(--soft); }
+.dot { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 2px solid var(--accentText); pointer-events: none; animation: ping .4s ease-out forwards; }
 .dot.right { border-color: #f59e0b; }
 @keyframes ping { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.info { margin-top: 24px; font-size: 12px; color: #6B7385; text-align: center; }
+.toast { position: fixed; bottom: calc(100px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 60; background: #252B3A; border: 1px solid #323A4E; padding: 11px 18px; border-radius: 20px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
-<h1 style="display:flex;align-items:center;justify-content:space-between">Zephyr Remote<button onclick="toggleSettings()" style="background:#1c1f26;color:#e8e8ea;border:none;border-radius:12px;width:44px;height:44px;font-size:22px">⚙️</button></h1>
-<div id="pinBox" class="card" style="display:none">
-  <b id="pinTitle">Enter your PIN</b>
-  <small id="pinHint"></small>
-  <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" onkeydown="if(event.key==='Enter')savePin()">
-  <input id="pinInput2" type="password" inputmode="numeric" placeholder="Type it again" style="display:none" onkeydown="if(event.key==='Enter')savePin()">
-  <button class="primary" onclick="savePin()">OK</button>
+<div class="top" id="mainTop">
+  <div><span class="eyebrow">Zephyr Remote</span><span class="title" id="pcName">Your PC</span></div>
+  <button class="iconbtn" aria-label="Settings" onclick="toggleSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
 </div>
-<div id="lockBox" class="card" style="display:none">
-  <b>🔒 Zephyr is locked</b>
+<div class="pills" id="pills"></div>
+<div id="pinBox" style="display:none">
+  <div class="logo"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></div>
+  <h2 id="pinTitle">Enter your PIN</h2>
+  <p id="pinHint"></p>
+  <div class="dots" id="pinDots"></div>
+  <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" style="display:none" onkeydown="if(event.key==='Enter')savePin()" oninput="drawDots()">
+  <input id="pinInput2" type="password" inputmode="numeric" placeholder="Type it again" style="display:none" onkeydown="if(event.key==='Enter')savePin()">
+  <button id="pinSave" class="primary" style="display:none;width:100%;max-width:310px" onclick="savePin()">Save PIN</button>
+  <div class="pad" id="pinPad">
+    <button onclick="pinKey(1)">1</button><button onclick="pinKey(2)">2</button><button onclick="pinKey(3)">3</button><button onclick="pinKey(4)">4</button><button onclick="pinKey(5)">5</button><button onclick="pinKey(6)">6</button><button onclick="pinKey(7)">7</button><button onclick="pinKey(8)">8</button><button onclick="pinKey(9)">9</button>
+    <button class="flat" aria-label="Delete" onclick="pinKey(-1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M12 10l4 4M16 10l-4 4"/></svg></button>
+    <button onclick="pinKey(0)">0</button>
+    <button class="ok" aria-label="OK" onclick="savePin()"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </div>
+</div>
+<div id="lockBox" class="card gatecard" style="display:none">
+  <b>Zephyr is locked</b>
   <small>Someone entered the wrong PIN 3 times. Enter your recovery code to unlock, or unlock it from the Zephyr tray icon on your PC.</small>
   <input id="unlockInput" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" onkeydown="if(event.key==='Enter')unlock()">
   <button class="primary" onclick="unlock()">Unlock</button>
 </div>
-<div id="pendingBox" class="card" style="display:none">
-  <b>🛡️ Waiting for approval</b>
+<div id="pendingBox" class="card gatecard" style="display:none">
+  <div class="logo" style="background:#14244A;color:#6E9BFF"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div>
+  <b>Waiting for approval</b>
   <small>Your PIN is right, but this is a new device. Approve it from a device you already use, from the Zephyr tray icon on your PC, or reply to your Zephyr Remote bot on Discord with:</small>
-  <div style="font-family:ui-monospace,Consolas,monospace;font-size:20px;text-align:center;background:#0f1115;border-radius:10px;padding:14px;user-select:all">approve <span id="pendingCode"></span></div>
+  <div class="mono" style="font-size:20px;text-align:center">approve <span id="pendingCode"></span></div>
   <small>This page opens by itself once you approve.</small>
 </div>
 <div id="recoveryBox" class="card" style="display:none">
   <b>Save your recovery code</b>
   <small>If someone enters the wrong PIN 3 times, Zephyr locks. You'll need this code to unlock it. Screenshot it or write it down.</small>
-  <div id="recoveryCode" style="font-family:ui-monospace,Consolas,monospace;font-size:20px;letter-spacing:1px;text-align:center;background:#0f1115;border-radius:10px;padding:14px;user-select:all"></div>
+  <div id="recoveryCode" class="mono" style="font-size:20px;letter-spacing:1px;text-align:center"></div>
   <button class="primary" onclick="document.getElementById('recoveryBox').style.display='none'">I saved it</button>
 </div>
-<div id="settingsBox" class="card" style="display:none">
-  <b>🌍 Remote access</b>
-  <small>Use Zephyr from anywhere: mobile data, school, a friend's Wi-Fi. The link changes when your PC restarts.</small>
-  <button id="remoteBtn" class="primary" onclick="toggleRemote()">Turn on</button>
-  <div id="remoteInfo" style="display:none">
-    <small id="remoteStatus"></small>
-    <div id="remoteUrl" style="font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all;background:#0f1115;border-radius:10px;padding:12px;margin:8px 0;user-select:all"></div>
-    <button class="plain" onclick="copyRemote()">Copy link</button>
+<div id="settingsBox" class="sheet" style="display:none">
+  <div class="head"><button class="iconbtn" aria-label="Back" onclick="toggleSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span>Settings</span></div>
+  <div class="label">Remote access</div>
+  <div class="group">
+    <small>Use Zephyr from anywhere: mobile data, school, a friend's Wi-Fi.</small>
+    <button id="remoteBtn" class="primary" onclick="toggleRemote()">Turn on</button>
+    <div id="remoteInfo" style="display:none;flex-direction:column;gap:8px">
+      <small id="remoteStatus"></small>
+      <div id="remoteUrl" class="mono"></div>
+      <button class="secondary" onclick="copyRemote()">Copy link</button>
+    </div>
   </div>
-  <small style="margin-top:6px">🤖 <b>Your Zephyr Remote bot</b>: Zephyr sends each new link to #zephyr-links as your bot, and your bot DMs you.</small>
-  <small id="botState"></small>
-  <input id="botToken" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Zephyr Remote bot token">
-  <input id="botChannel" inputmode="numeric" placeholder="#zephyr-links channel ID">
-  <button class="plain" onclick="saveBot()">Save bot</button>
-  <small style="margin-top:6px">Or use a Discord webhook instead:</small>
-  <input id="webhookInput" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/...">
-  <button class="plain" onclick="saveWebhook()">Save webhook</button>
-  <hr style="border:none;border-top:1px solid #2a2e38;margin:8px 0">
-  <b>⬆️ Updates</b>
-  <small id="updateText">Checking version…</small>
-  <button id="updateBtn" class="primary" onclick="updateAction()">Check for updates</button>
-  <hr style="border:none;border-top:1px solid #2a2e38;margin:8px 0">
-  <b>📱 Devices</b>
-  <small>New devices outside your home Wi-Fi need your approval. Your bot DMs you when one tries to get in.</small>
-  <div id="deviceList"></div>
-  <hr style="border:none;border-top:1px solid #2a2e38;margin:8px 0">
-  <b>Change PIN</b>
-  <input id="newPin" type="password" inputmode="numeric" placeholder="New PIN (at least 4 characters)">
-  <input id="newPin2" type="password" inputmode="numeric" placeholder="Type it again">
-  <button class="primary" onclick="changePin()">Save new PIN</button>
-  <button class="plain" onclick="showRecovery()">Show my recovery code</button>
-  <button class="plain" onclick="toggleSettings()">Cancel</button>
+  <div class="label">Discord alerts</div>
+  <div class="group">
+    <small>Your Zephyr Remote bot posts each new link and alert, and DMs you.</small>
+    <small id="botState"></small>
+    <input id="botToken" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Bot token">
+    <input id="botChannel" inputmode="numeric" placeholder="Channel ID">
+    <button class="secondary" onclick="saveBot()">Save bot</button>
+    <small>Or use a Discord webhook instead:</small>
+    <input id="webhookInput" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/...">
+    <button class="secondary" onclick="saveWebhook()">Save webhook</button>
+  </div>
+  <div class="label">Devices</div>
+  <div class="group">
+    <small>New devices outside your home Wi-Fi need your approval.</small>
+    <div id="deviceList"></div>
+  </div>
+  <div class="label">Updates</div>
+  <div class="group">
+    <small id="updateText">Checking version…</small>
+    <button id="updateBtn" class="primary" onclick="updateAction()">Check for updates</button>
+  </div>
+  <div class="label">Security</div>
+  <div class="group">
+    <b>Change PIN</b>
+    <input id="newPin" type="password" inputmode="numeric" placeholder="New PIN (at least 4 characters)">
+    <input id="newPin2" type="password" inputmode="numeric" placeholder="Type it again">
+    <button class="primary" onclick="changePin()">Save new PIN</button>
+    <button class="secondary" onclick="showRecovery()">Show my recovery code</button>
+  </div>
+  <div class="info" id="info"></div>
 </div>
 <div class="power">
-  <button onclick="power('lock')">Lock</button>
-  <button onclick="power('sleep')">Sleep</button>
-  <button onclick="power('restart')">Restart</button>
-  <button class="danger" onclick="power('shutdown')">Off</button>
+  <button onclick="power('sleep')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>Sleep</button>
+  <button onclick="power('lock')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Lock</button>
+  <button onclick="power('restart')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>Restart</button>
+  <button class="danger" onclick="power('shutdown')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>Shut down</button>
 </div>
-<div id="updateOverlay" style="display:none;position:fixed;inset:0;background:#0f1115;z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center">
-  <div style="font-size:44px">⬆️</div>
-  <b id="updTitle" style="font-size:20px">Updating Zephyr</b>
-  <div style="width:100%;max-width:320px;height:10px;background:#1c1f26;border-radius:5px;overflow:hidden"><div id="updBar" style="height:100%;width:0;background:#3b82f6;border-radius:5px;transition:width .5s"></div></div>
-  <small id="updText" style="color:#8b8f99">Starting…</small>
+<div id="updateOverlay" style="display:none">
+  <div class="logo" style="width:84px;height:84px;border-radius:26px;background:#14244A;color:#6E9BFF"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></div>
+  <b id="updTitle" style="font-size:22px;font-weight:700;margin-top:6px">Updating Zephyr</b>
+  <small style="color:var(--muted);font-size:14.5px;line-height:1.5">Zephyr restarts by itself. This page reloads when it's back.</small>
+  <div style="width:100%;max-width:320px;height:10px;background:var(--card2);border-radius:5px;overflow:hidden;margin-top:12px"><div id="updBar" style="height:100%;width:0;background:var(--accent);border-radius:5px;transition:width .5s"></div></div>
+  <small id="updText" style="color:#C9D0DD;font-size:13.5px;font-weight:500">Starting…</small>
   <button id="updReload" class="primary" style="display:none;padding:12px 28px" onclick="location.reload()">Reload</button>
 </div>
-<div id="updateBanner" class="card" style="display:none;flex-direction:row;align-items:center;gap:10px;padding:12px;background:#1d2b4a">
-  <div style="flex:1"><b style="font-size:15px">⬆️ Update available</b><br><small id="updateBannerText"></small></div>
-  <button class="primary" style="width:auto;padding:10px 14px" onclick="updateAction()">Update</button>
+<div id="updateBanner" class="card" style="display:none">
+  <div style="flex:1;display:flex;flex-direction:column;gap:3px"><b style="font-size:15px;color:#C9D8FF">Update available</b><small id="updateBannerText"></small></div>
+  <button class="primary" style="padding:10px 16px" onclick="updateAction()">Update</button>
 </div>
-<div class="tabs">
-  <button id="tab-apps" class="on" onclick="tab('apps')">Apps</button>
-  <button id="tab-running" onclick="tab('running')">Open now</button>
-  <button id="tab-screen" onclick="tab('screen')">Screen</button>
-  <button id="tab-files" onclick="tab('files')">Files</button>
-</div>
+<nav class="tabs">
+  <button id="tab-apps" class="on" onclick="tab('apps')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Apps</button>
+  <button id="tab-running" onclick="tab('running')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Open now</button>
+  <button id="tab-screen" onclick="tab('screen')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Screen</button>
+  <button id="tab-files" onclick="tab('files')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Files</button>
+</nav>
 <div id="view-apps">
-  <input id="search" placeholder="Search apps" oninput="render()">
+  <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="search" placeholder="Search apps and games" aria-label="Search apps" oninput="render()"></label>
+  <div class="section"><b>Apps &amp; games</b><span id="appCount"></span></div>
   <div class="grid" id="grid"></div>
 </div>
 <div id="view-files" style="display:none">
-  <div class="card" style="margin-bottom:12px">
-    <b>📋 Clipboard</b>
-    <textarea id="clipText" rows="3" placeholder="Text to send, or get the PC's clipboard" style="width:100%;box-sizing:border-box;background:#0f1115;color:#e6e8ec;border:1px solid #2a2e38;border-radius:10px;padding:10px;font-size:15px;resize:vertical"></textarea>
+  <div class="top"><div><span class="eyebrow">Phone ↔ PC</span><span class="title">Files</span></div></div>
+  <div class="big2">
+    <button class="go" onclick="document.getElementById('uploadInput').click()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Send to PC</button>
+    <button id="clipBtn" onclick="toggleClip()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="4" width="10" height="4" rx="1"/><path d="M8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2"/></svg>Clipboard</button>
+  </div>
+  <input id="uploadInput" type="file" multiple style="display:none" onchange="uploadFiles(this.files)">
+  <div id="uploadStatus"></div>
+  <div class="card" id="clipCard" style="display:none">
+    <small>Get the text copied on your PC, or send text to your PC's clipboard.</small>
+    <textarea id="clipText" rows="3" placeholder="Text to send, or get the PC's clipboard" style="resize:vertical"></textarea>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button onclick="clipGet()">⬇️ Get from PC</button>
-      <button class="primary" onclick="clipSend()">⬆️ Send to PC</button>
+      <button class="secondary" onclick="clipGet()">Get from PC</button>
+      <button class="primary" onclick="clipSend()">Send to PC</button>
     </div>
   </div>
-  <div class="card" style="margin-bottom:12px">
-    <b>📤 Send files to PC</b>
-    <small>They go to Downloads\Zephyr on your PC.</small>
-    <input id="uploadInput" type="file" multiple style="display:none" onchange="uploadFiles(this.files)">
-    <button class="primary" onclick="document.getElementById('uploadInput').click()">Choose files</button>
-    <div id="uploadStatus"></div>
-  </div>
-  <b style="display:block;margin:4px 0 8px">📁 PC files</b>
-  <div id="filePath" style="color:#9a9ea8;font-size:13px;margin-bottom:8px;word-break:break-all"></div>
-  <div id="fileList"></div>
+  <div class="label" style="margin-top:6px">PC files</div>
+  <div class="path" id="filePath"></div>
+  <div class="list" id="fileList"></div>
 </div>
 <div id="view-running" style="display:none">
+  <div class="top"><div><span class="eyebrow" id="runningSub">Running on your PC</span><span class="title">Open now</span></div></div>
   <div id="runningList"></div>
 </div>
 <div id="view-screen" style="display:none">
-  <div class="screens" id="screenButtons"></div>
-  <div id="lockBanner" class="card" style="display:none;margin-bottom:10px;padding:12px">
-    <small>🔒 <b>Your PC is locked.</b> Turn Mouse on and tap the picture, then tap ⌨, type your Windows PIN or password and press Enter.</small>
+  <div class="screenhead"><div><span class="eyebrow" id="screenSub">Live</span><span class="title">Screen</span></div><div class="screens" id="screenButtons"></div></div>
+  <div id="lockBanner" class="card" style="display:none;margin-bottom:12px;padding:12px 14px">
+    <small><b style="font-size:14px">Your PC is locked.</b> Turn Mouse on and tap the picture, then tap Keyboard, type your Windows PIN or password and press Enter.</small>
   </div>
   <div id="screenWrap">
     <div id="screenView"><img id="screenImg"><canvas id="screenCanvas"></canvas></div>
     <div class="ctrl">
-      <button id="mouseBtn" onclick="toggleMouse()">Mouse: off</button>
-      <button id="hdBtn" onclick="toggleHd()">HD</button>
-      <button onclick="wakePc()">☀️</button>
-      <button id="audioBtn" onclick="toggleAudio()">🔇</button>
-      <button onclick="scrollPc(1)">Scroll ▲</button>
-      <button onclick="scrollPc(-1)">Scroll ▼</button>
-      <button id="kbBtn" onclick="toggleKeyboard()">⌨</button>
-      <button onclick="toggleFull()">⛶</button>
+      <button id="mouseBtn" onclick="toggleMouse()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 7v3"/></svg><span>Mouse</span></button>
+      <button id="kbBtn" onclick="toggleKeyboard()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg><span>Keyboard</span></button>
+      <button id="audioBtn" onclick="toggleAudio()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg><span>Sound</span></button>
+      <button onclick="toggleFull()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Full screen</span></button>
+      <button onclick="scrollPc(1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg><span>Scroll up</span></button>
+      <button onclick="scrollPc(-1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg><span>Scroll down</span></button>
+      <button onclick="wakePc()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg><span>Wake</span></button>
+      <button id="hdBtn" onclick="toggleHd()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 10v4M7 12h3M13 10h2a2 2 0 0 1 0 4h-2z"/></svg><span>HD</span></button>
     </div>
     <div id="kbPanel" style="display:none">
-      <input id="kbInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here and type — it goes to your PC" style="margin:8px 0 6px">
+      <input id="kbInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here and type — it goes to your PC">
       <div class="keys">
         <button onclick="key('esc')">Esc</button>
         <button onclick="key('tab')">Tab</button>
@@ -219,9 +309,11 @@ input { width: 100%; padding: 12px; border-radius: 12px; border: none; backgroun
       </div>
     </div>
   </div>
-  <div class="info">Mouse on: drag = move · tap = click · hold = right click · double-tap + drag = select<br>Pinch = zoom · two-finger swipe = scroll</div>
+  <div class="gestures">
+    <b>Touchpad gestures (Mouse on)</b>
+    <div><span>Drag · move</span><span>Tap · click</span><span>Hold · right-click</span><span>Double-tap + drag · select</span><span>Pinch · zoom</span><span>Two fingers · scroll</span></div>
+  </div>
 </div>
-<div class="info" id="info"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -252,6 +344,7 @@ let pendingTimer = null;
 function showPending(info) {
   document.getElementById('pendingCode').textContent = info.code;
   if (pendingTimer) return;
+  document.body.classList.add('gate');
   document.getElementById('pendingBox').style.display = 'flex';
   document.getElementById('pinBox').style.display = 'none';
   ['view-apps', 'view-running', 'view-screen', 'view-files'].forEach(id => document.getElementById(id).style.display = 'none');
@@ -273,6 +366,7 @@ async function deviceAction(action, id) {
 
 function showLocked() {
   if (document.getElementById('lockBox').style.display === 'flex') return;
+  document.body.classList.add('gate');
   document.getElementById('lockBox').style.display = 'flex';
   document.getElementById('pinBox').style.display = 'none';
   ['view-apps', 'view-running', 'view-screen', 'view-files'].forEach(id => document.getElementById(id).style.display = 'none');
@@ -300,7 +394,20 @@ async function showRecovery() {
 
 let creatingPin = false;
 
+function drawDots() {
+  const n = document.getElementById('pinInput').value.length;
+  document.getElementById('pinDots').innerHTML = Array.from({ length: Math.max(4, n) }, (_, i) => `<span class="${i < n ? 'on' : ''}"></span>`).join('');
+}
+
+function pinKey(k) {
+  const input = document.getElementById('pinInput');
+  if (k < 0) input.value = input.value.slice(0, -1);
+  else if (input.value.length < 32) input.value += k;
+  drawDots();
+}
+
 async function showPin(show) {
+  document.body.classList.toggle('gate', show);
   document.getElementById('pinBox').style.display = show ? 'flex' : 'none';
   if (!show) return;
   const status = await (await fetch('/setup/status')).json();
@@ -309,8 +416,12 @@ async function showPin(show) {
   document.getElementById('pinTitle').textContent = creatingPin ? 'Create a PIN' : 'Enter your PIN';
   document.getElementById('pinHint').textContent = creatingPin
     ? 'Pick a PIN for this PC (at least 4 characters). You\'ll need it to connect from any phone.'
-    : 'Type the PIN you set for this PC. ' + status.triesLeft + (status.triesLeft === 1 ? ' try' : ' tries') + ' left before Zephyr locks.';
-  document.getElementById('pinInput2').style.display = creatingPin ? 'block' : 'none';
+    : status.triesLeft + (status.triesLeft === 1 ? ' try' : ' tries') + ' left before Zephyr locks.';
+  ['pinInput', 'pinInput2', 'pinSave'].forEach(id => document.getElementById(id).style.display = creatingPin ? 'block' : 'none');
+  document.getElementById('pinPad').style.display = creatingPin ? 'none' : 'grid';
+  document.getElementById('pinDots').style.display = creatingPin ? 'none' : 'flex';
+  document.getElementById('pinInput').value = '';
+  drawDots();
 }
 
 async function savePin() {
@@ -358,11 +469,11 @@ async function loadDevices() {
   if (!res.ok) return;
   const list = await res.json();
   document.getElementById('deviceList').innerHTML = list.map(d => `
-    <div class="row" style="margin-bottom:6px">
-      <div class="txt"><b>${escapeHtml(d.name)}${d.id === deviceId ? ' <span style="color:#6b9cff;font-size:12px">(this device)</span>' : ''}</b>
-      <small>${d.trusted ? '' : '🛡️ Waiting for approval · '}${d.remote ? '🌍 Remote' : '🏠 Home Wi-Fi'} · ${ago(d.lastSeen)} · IP ${escapeHtml(d.ip)}</small></div>
-      ${d.trusted ? '' : `<button class="primary" style="width:auto;padding:8px 12px" onclick="deviceAction('approve','${d.id}')">Approve</button>`}
-      ${d.id === deviceId ? '' : `<button style="width:auto;padding:8px 12px" onclick="deviceAction('remove','${d.id}')">✕</button>`}
+    <div class="row">
+      <div class="txt"><b>${escapeHtml(d.name)}</b>
+      <small>${d.id === deviceId ? 'This device · ' : ''}${d.trusted ? '' : 'Waiting · code ' + escapeHtml(d.code || '') + ' · '}${d.remote ? 'Remote' : 'Home Wi-Fi'} · ${ago(d.lastSeen)}</small></div>
+      ${d.trusted ? (d.id === deviceId ? '<span class="tag">Trusted</span>' : '') : `<button class="primary" style="padding:9px 14px;font-size:13px" onclick="deviceAction('approve','${d.id}')">Approve</button>`}
+      ${d.id === deviceId ? '' : `<button class="x soft" aria-label="Remove device" onclick="deviceAction('remove','${d.id}')">${XICON}</button>`}
     </div>`).join('') || '<small>No devices yet.</small>';
 }
 
@@ -461,15 +572,15 @@ async function loadRemote() {
   const r = await res.json();
   const btn = document.getElementById('remoteBtn');
   btn.textContent = r.enabled ? 'Turn off' : 'Turn on';
-  btn.className = r.enabled ? 'plain' : 'primary';
-  document.getElementById('remoteInfo').style.display = r.enabled ? 'block' : 'none';
-  const labels = { downloading: 'Downloading the tunnel (first time only)...', connecting: 'Connecting...', reconnecting: 'Reconnecting...', on: '🟢 Online. Open this link from anywhere:' };
+  btn.className = r.enabled ? 'secondary' : 'primary';
+  document.getElementById('remoteInfo').style.display = r.enabled ? 'flex' : 'none';
+  const labels = { downloading: 'Downloading the tunnel (first time only)...', connecting: 'Connecting...', reconnecting: 'Reconnecting...', on: 'Online. Open this link from anywhere:' };
   document.getElementById('remoteStatus').textContent = labels[r.status] || r.status;
   document.getElementById('remoteUrl').textContent = r.url || '';
   document.getElementById('remoteUrl').style.display = r.url ? 'block' : 'none';
   document.getElementById('botState').textContent = r.botStatus && r.botStatus !== 'ok'
-    ? '⚠️ ' + r.botStatus
-    : (r.bot ? '✅ Your bot sends the link. Save again to change it.' : '');
+    ? r.botStatus
+    : (r.bot ? 'Connected. Your bot sends the link. Save again to change it.' : '');
   document.getElementById('webhookInput').placeholder = r.webhook ? 'Webhook saved ✓ (paste a new one to replace)' : 'https://discord.com/api/webhooks/...';
   if (r.enabled && !r.url && document.getElementById('settingsBox').style.display !== 'none')
     remoteTimer = setTimeout(loadRemote, 2000);
@@ -550,7 +661,12 @@ async function load() {
 
   loadUpdate();
   const info = await (await api('/api/info')).json();
-  document.getElementById('info').innerHTML = 'PC MAC: ' + escapeHtml(info.mac) + ' · <a class="link" onclick="toggleSettings()">Settings</a>';
+  document.getElementById('info').textContent = 'PC MAC ' + info.mac + ' · IP ' + info.ip;
+  if (info.name) document.getElementById('pcName').textContent = info.name;
+  document.getElementById('runningSub').textContent = 'Running on ' + (info.name || 'your PC');
+  document.getElementById('pills').innerHTML = '<span class="pill ok">Online</span>'
+    + `<span class="pill">${location.protocol === 'https:' ? 'Remote' : 'Home Wi-Fi'}</span>`
+    + (info.version ? `<span class="pill">v${escapeHtml(info.version)}</span>` : '');
 }
 
 function escapeHtml(text) {
@@ -562,11 +678,12 @@ function escapeHtml(text) {
 function render() {
   const query = document.getElementById('search').value.toLowerCase();
   const grid = document.getElementById('grid');
-  grid.innerHTML = apps
-    .filter(a => a.name.toLowerCase().includes(query))
+  const shown = apps.filter(a => a.name.toLowerCase().includes(query));
+  document.getElementById('appCount').textContent = shown.length + (shown.length === 1 ? ' app' : ' apps');
+  grid.innerHTML = shown
     .map(a => `
       <button class="app" onclick="launch('${a.id}')">
-        <img src="/api/icon/${a.id}?${auth()}" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span class="ico"><img src="/api/icon/${a.id}?${auth()}" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span>
         <span>${escapeHtml(a.name)}</span>
       </button>`)
     .join('');
@@ -612,14 +729,15 @@ async function openFolder(path) {
   filesLoaded = true;
   const data = await res.json();
   document.getElementById('filePath').textContent = data.path || 'Places';
-  const up = data.path ? [{ name: '⬅️ Back', path: data.parent || '', folder: true, back: true }] : [];
+  const up = data.path ? [{ name: 'Back', path: data.parent || '', folder: true, back: true }] : [];
   fileItems = up.concat(data.items);
+  const ext = n => (n.includes('.') ? n.split('.').pop() : '').slice(0, 4).toUpperCase();
   document.getElementById('fileList').innerHTML = fileItems.map((f, i) => `
     <div class="row" onclick="fileTap(${i})">
-      <div style="font-size:22px">${f.back ? '' : f.folder ? (data.path ? '📁' : '') : '📄'}</div>
-      <div class="txt"><b>${escapeHtml(f.name)}</b>${f.folder ? '' : `<small>${size(f.size)} · ${new Date(f.modified).toLocaleDateString()}</small>`}</div>
-      ${f.folder ? '' : `<button style="width:auto;padding:8px 12px" onclick="event.stopPropagation();fileOpenOnPc(${i})">🖥️</button>`}
-    </div>`).join('') || '<small>Empty folder</small>';
+      <span class="ico" style="font-size:10px;font-weight:700;letter-spacing:.4px;color:${f.folder ? '#8FB6FF' : '#C9D0DD'}">${f.back ? BACKICON : f.folder ? FOLDERICON : escapeHtml(ext(f.name) || 'FILE')}</span>
+      <div class="txt"><b>${escapeHtml(f.name.replace(/^[^A-Za-z0-9]+ /, ''))}</b>${f.folder ? '' : `<small>${size(f.size)} · ${new Date(f.modified).toLocaleDateString()}</small>`}</div>
+      ${f.folder ? '' : `<button class="x soft" aria-label="Open on PC" onclick="event.stopPropagation();fileOpenOnPc(${i})">${PCICON}</button>`}
+    </div>`).join('') || '<div class="row"><small>Empty folder</small></div>';
   window.scrollTo(0, 0);
 }
 
@@ -646,14 +764,14 @@ async function uploadFiles(list) {
   for (const file of list) {
     let name = file.name;
     for (let offset = 0; offset < file.size || offset === 0; offset += chunk) {
-      status.innerHTML = `<small>Sending ${escapeHtml(file.name)}… ${Math.round(offset / Math.max(file.size, 1) * 100)}%</small>`;
+      status.innerHTML = `<div class="card"><small>Sending ${escapeHtml(file.name)}… ${Math.round(offset / Math.max(file.size, 1) * 100)}%</small></div>`;
       const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk) });
-      if (!res.ok) { status.innerHTML = `<small>❌ ${escapeHtml(file.name)} failed</small>`; return; }
+      if (!res.ok) { status.innerHTML = `<div class="card"><small>${escapeHtml(file.name)} failed to send</small></div>`; return; }
       name = (await res.json()).name;
       if (file.size === 0) break;
     }
   }
-  status.innerHTML = `<small>✅ Sent ${list.length} file${list.length > 1 ? 's' : ''}</small>`;
+  status.innerHTML = `<div class="card"><small style="color:#5BE3A0">Sent ${list.length} file${list.length > 1 ? 's' : ''} to Downloads\\Zephyr</small></div>`;
   document.getElementById('uploadInput').value = '';
   if (document.getElementById('filePath').textContent.endsWith('Zephyr')) openFolder(document.getElementById('filePath').textContent);
 }
@@ -672,7 +790,22 @@ async function clipSend() {
   toast(res.ok ? 'On your PC clipboard ✓ (Ctrl+V)' : 'Failed');
 }
 
+const XICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const BACKICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+const FOLDERICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+const PCICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>';
+
+function toggleClip() {
+  const card = document.getElementById('clipCard');
+  const open = card.style.display === 'none';
+  card.style.display = open ? 'flex' : 'none';
+  document.getElementById('clipBtn').className = open ? 'on' : '';
+}
+
 function tab(name) {
+  window.scrollTo(0, 0);
+  ['mainTop', 'pills'].forEach(id => document.getElementById(id).style.display = name === 'apps' ? '' : 'none');
+  document.querySelector('.power').style.display = name === 'apps' ? '' : 'none';
   currentTab = name;
   ['apps', 'running', 'screen', 'files'].forEach(t => {
     document.getElementById('view-' + t).style.display = t === name ? 'block' : 'none';
@@ -693,17 +826,17 @@ async function loadRunning() {
   const res = await api('/api/running');
   if (!res.ok) return;
   const list = await res.json();
-  const row = a => `
+  const row = (a, soft) => `
     <div class="row">
-      <img src="/api/running/icon/${a.id}?${auth()}" style="width:32px;height:32px" onerror="this.style.visibility='hidden'">
+      <span class="ico"><img src="/api/running/icon/${a.id}?${auth()}" alt="" onerror="this.style.visibility='hidden'"></span>
       <div class="txt"><b>${escapeHtml(a.name)}</b><small>${escapeHtml(a.title)}</small></div>
-      <button onclick="closeApp('${a.id}', '${escapeHtml(a.name).replace(/'/g, '')}')">Close</button>
+      <button class="x${soft ? ' soft' : ''}" aria-label="Close ${escapeHtml(a.name)}" onclick="closeApp('${a.id}', '${escapeHtml(a.name).replace(/'/g, '')}')">${XICON}</button>
     </div>`;
   const open = list.filter(a => a.hasWindow);
   const background = list.filter(a => !a.hasWindow);
   document.getElementById('runningList').innerHTML =
-    (open.length ? '<div class="label">Open windows</div>' + open.map(row).join('') : '') +
-    (background.length ? '<div class="label">Running in the background</div>' + background.map(row).join('') : '') ||
+    (open.length ? '<div class="label">Windows</div><div class="list">' + open.map(a => row(a, false)).join('') + '</div>' : '') +
+    (background.length ? '<div class="label">In the background</div><div class="list">' + background.map(a => row(a, true)).join('') + '</div>' : '') ||
     '<div class="info">No open apps</div>';
 }
 
@@ -760,7 +893,6 @@ function toggleAudio() {
 
 function startAudio() {
   audioOn = true;
-  document.getElementById('audioBtn').textContent = '🔊';
   document.getElementById('audioBtn').className = 'on';
   if (!silentTag) {
     silentTag = new Audio(silentWav());
@@ -783,7 +915,6 @@ function connectAudio() {
 
 function stopAudio() {
   audioOn = false;
-  document.getElementById('audioBtn').textContent = '🔇';
   document.getElementById('audioBtn').className = '';
   if (audioWs) audioWs.close();
   audioWs = null;
@@ -847,8 +978,9 @@ function screenEl() {
 function updateHdButton() {
   const btn = document.getElementById('hdBtn');
   if (!btn) return;
-  btn.textContent = hdWanted ? 'HD' : 'SD';
+  btn.querySelector('span').textContent = hdWanted ? 'HD' : 'SD';
   btn.className = hdActive() ? 'on' : '';
+  document.getElementById('screenSub').textContent = hdActive() ? 'Live · HD' : 'Live';
 }
 
 function toggleHd() {
@@ -953,7 +1085,6 @@ function pickScreen(i) {
 function toggleMouse() {
   mouseOn = !mouseOn;
   const btn = document.getElementById('mouseBtn');
-  btn.textContent = 'Mouse: ' + (mouseOn ? 'on' : 'off');
   btn.className = mouseOn ? 'on' : '';
 }
 
