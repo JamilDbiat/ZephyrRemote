@@ -23,6 +23,7 @@ public class PhoneMirror
                 return "Couldn't download iPhone mirroring. Check your internet and try again.";
         }
 
+        await AllowThroughFirewall(Path.GetDirectoryName(exe)!);
         Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe) });
         return "";
     }
@@ -64,6 +65,14 @@ public class PhoneMirror
         File.WriteAllText(AndroidIpFile, match.Groups[1].Value);
         await Task.Delay(2000);
         return await Launch(exe, $"--tcpip={match.Groups[1].Value}:5555 --window-title \"Zephyr · Android\" --stay-awake");
+    }
+
+    private static async Task AllowThroughFirewall(string dir)
+    {
+        string script = "Get-NetFirewallRule -DisplayName 'Zephyr Remote - iPhone mirroring*' -ErrorAction SilentlyContinue | Remove-NetFirewallRule; "
+            + $"foreach ($e in '{dir}\\uxplay-windows.exe', '{dir}\\mDNSResponder.exe') {{ "
+            + "New-NetFirewallRule -DisplayName ('Zephyr Remote - iPhone mirroring ' + [IO.Path]::GetFileNameWithoutExtension($e)) -Direction Inbound -Program $e -Action Allow -Profile Any | Out-Null }";
+        await Run("powershell.exe", $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"");
     }
 
     private async Task<string?> Scrcpy(Action<string> status)
