@@ -71,7 +71,7 @@ input:focus, textarea:focus { border-color: var(--accent); }
 .big2 button.go { background: var(--accent); border-color: var(--accent); color: #fff; }
 .big2 button.on { border-color: var(--accent); background: var(--accentSoft); }
 .path { color: var(--muted); font-size: 12.5px; margin: 0 4px 10px; word-break: break-all; }
-nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); background: rgba(13, 16, 22, 0.94); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line2); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px 12px max(10px, calc(env(safe-area-inset-bottom) - 6px)); background: rgba(13, 16, 22, 0.94); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line2); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 nav.tabs button { background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 2px 0; }
 nav.tabs button.on { color: var(--accentText); font-weight: 600; }
 .gate .top, .gate .pills, .gate .power, .gate nav.tabs, .gate #updateBanner, .gate #view-apps, .gate #view-running, .gate #view-screen, .gate #view-files { display: none !important; }
@@ -136,6 +136,8 @@ nav.tabs button.on { color: var(--accentText); font-weight: 600; }
 .info { margin-top: 24px; font-size: 12px; color: #6B7385; text-align: center; }
 .toast { position: fixed; bottom: calc(100px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 60; background: #252B3A; border: 1px solid #323A4E; padding: 11px 18px; border-radius: 20px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; }
+.shortvp nav.tabs { padding-bottom: 8px; }
+.shortvp #screenWrap.full .ctrl { padding-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -1100,6 +1102,15 @@ matchMedia('(orientation: landscape)').addEventListener('change', e => {
   }
   setTimeout(fitToViewport, 300);
 });
+
+function fixBottom() {
+  const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  const landscape = window.innerWidth > window.innerHeight;
+  const full = landscape ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+  document.body.classList.toggle('shortvp', standalone && full - window.innerHeight > 20);
+}
+fixBottom();
+window.addEventListener('resize', fixBottom);
 
 if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js');
 
