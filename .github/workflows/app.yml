@@ -39,14 +39,14 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Use newest Xcode
         run: |
-          XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          XCODE=$(ls -d /Applications/Xcode_26.0*.app 2>/dev/null | sort -V | tail -1); [ -z "$XCODE" ] && XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | head -1)
           ls -d /Applications/Xcode_*.app; echo "Using $XCODE"
           sudo xcode-select -s "$XCODE"
       - run: dotnet --version
         working-directory: app
       - run: dotnet workload install maui-ios
         working-directory: app
-      - run: dotnet build ZephyrApp/ZephyrApp.csproj -f net10.0-ios26.0 -c Release -p:TargetFrameworks=net10.0-ios26.0 -p:RuntimeIdentifier=ios-arm64 -p:EnableCodeSigning=false
+      - run: dotnet build ZephyrApp/ZephyrApp.csproj -f net10.0-ios26.0 -c Release -p:TargetFrameworks=net10.0-ios26.0 -p:RuntimeIdentifier=ios-arm64 -p:EnableCodeSigning=false -p:ValidateXcodeVersion=false
         working-directory: app
       - name: Make IPA
         run: |
