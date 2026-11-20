@@ -258,7 +258,7 @@ body { min-height: 100vh; min-height: 100lvh; }
     <button class="go" onclick="document.getElementById('uploadInput').click()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Send to PC</button>
     <button id="clipBtn" onclick="toggleClip()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="4" width="10" height="4" rx="1"/><path d="M8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2"/></svg>Clipboard</button>
   </div>
-  <input id="uploadInput" type="file" multiple style="display:none" onchange="uploadFiles(this.files)">
+  <input id="uploadInput" type="file" multiple accept="image/heic,image/heif,image/*,video/*,application/*,text/*,audio/*" style="display:none" onchange="uploadFiles(this.files)">
   <div id="uploadStatus"></div>
   <div class="card" id="clipCard" style="display:none">
     <small>Get the text copied on your PC, or send text to your PC's clipboard.</small>
