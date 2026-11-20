@@ -171,6 +171,12 @@ app.MapPost("/api/files/upload", async (HttpRequest request, string name, long o
     return Results.Ok(new { name = Path.GetFileName(path) });
 });
 
+app.MapGet("/api/files/upload/size", (string name) =>
+{
+    string? path = files.UploadPath(name);
+    return path == null ? Results.NotFound() : Results.Ok(new { size = new FileInfo(path).Length });
+});
+
 app.MapPost("/api/files/open", (string path) =>
 {
     if (!File.Exists(path) && !Directory.Exists(path))

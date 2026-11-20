@@ -770,28 +770,52 @@ function waitVisible() {
   });
 }
 
-async function sendFile(file) {
+function postChunk(url, blob, onLoaded) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let last = Date.now();
+    const watch = setInterval(() => { if (Date.now() - last > 30000) xhr.abort(); }, 3000);
+    const done = ok => { clearInterval(watch); ok ? resolve(JSON.parse(xhr.responseText)) : reject(); };
+    xhr.open('POST', url);
+    xhr.upload.onprogress = e => { last = Date.now(); onLoaded(e.loaded); };
+    xhr.onload = () => done(xhr.status === 200);
+    xhr.onerror = () => done(false);
+    xhr.onabort = () => done(false);
+    xhr.send(blob);
+  });
+}
+
+async function serverSize(name) {
+  try {
+    const r = await fetch(`/api/files/upload/size?name=${encodeURIComponent(name)}&${auth()}`, { cache: 'no-store' });
+    if (r.ok) return (await r.json()).size;
+  } catch {}
+  return -1;
+}
+
+async function sendFile(file, report) {
   const chunk = 8 * 1024 * 1024;
   let name = file.name;
   let offset = 0;
   let failures = 0;
   while (failures < 6) {
     await waitVisible();
-    const abort = new AbortController();
-    const limit = setTimeout(() => abort.abort(), 60000);
     try {
-      const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk), signal: abort.signal });
-      if (!res.ok) throw new Error('upload');
-      name = (await res.json()).name;
-      offset += chunk;
+      const start = offset;
+      const res = await postChunk(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${start}&${auth()}`, file.slice(start, start + chunk), loaded => report(start + loaded));
+      name = res.name;
+      offset = Math.min(start + chunk, file.size);
       failures = 0;
+      report(offset);
       if (offset >= file.size) return true;
     } catch {
       if (!document.hidden) failures++;
-      if (offset > 0) offset = 0, name = file.name;
       await new Promise(r => setTimeout(r, 1500));
-    } finally {
-      clearTimeout(limit);
+      if (offset > 0) {
+        const size = await serverSize(name);
+        if (size >= 0) offset = size;
+      }
+      report(offset);
     }
   }
   return false;
@@ -803,37 +827,46 @@ async function uploadFiles(list) {
   const files = Array.from(list);
   const queue = files.slice();
   const failed = [];
+  const live = new Map();
   const totalBytes = files.reduce((n, f) => n + f.size, 0);
   const started = Date.now();
-  let done = 0, sentBytes = 0;
+  let done = 0, doneBytes = 0, drawTimer = null;
   let wake = null;
   try { wake = await navigator.wakeLock.request('screen'); } catch {}
 
   const status = document.getElementById('uploadStatus');
   const draw = () => {
-    const pct = Math.round(sentBytes / Math.max(totalBytes, 1) * 100);
+    drawTimer = null;
+    let sentBytes = doneBytes;
+    live.forEach(b => sentBytes += b);
+    const pct = Math.min(100, Math.round(sentBytes / Math.max(totalBytes, 1) * 100));
     const secs = (Date.now() - started) / 1000;
     const left = sentBytes > 0 && secs > 3 ? Math.round(secs * (totalBytes - sentBytes) / sentBytes) : 0;
     status.innerHTML = `<div class="card">
-      <div style="display:flex;justify-content:space-between;font-size:14px"><b style="font-size:14px">Sending ${done + failed.length} of ${files.length}</b><span style="color:var(--muted)">${pct}%</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px"><b style="font-size:14px">${done + failed.length} of ${files.length} sent</b><span style="color:var(--muted)">${pct}%</span></div>
       <div style="height:6px;border-radius:3px;background:var(--card2)"><div style="height:6px;width:${pct}%;border-radius:3px;background:var(--accent);transition:width .3s"></div></div>
       <small>${size(sentBytes)} of ${size(totalBytes)}${left ? ' · about ' + (left > 90 ? Math.round(left / 60) + ' min' : left + ' s') + ' left' : ''}${failed.length ? ' · ' + failed.length + ' failed' : ''}. Keep Zephyr open: switching apps pauses sending, and it continues when you come back.</small>
     </div>`;
   };
+  const drawSoon = () => { if (!drawTimer) drawTimer = setTimeout(draw, 300); };
   draw();
 
   const worker = async () => {
     while (queue.length) {
       const file = queue.shift();
-      if (await sendFile(file)) done++;
+      live.set(file, 0);
+      const ok = await sendFile(file, b => { live.set(file, b); drawSoon(); });
+      live.delete(file);
+      doneBytes += file.size;
+      if (ok) done++;
       else failed.push(file);
-      sentBytes += file.size;
-      draw();
+      drawSoon();
     }
   };
   const lanes = location.protocol === 'https:' ? 4 : 6;
   await Promise.all(Array.from({ length: Math.min(lanes, files.length) }, worker));
 
+  clearTimeout(drawTimer);
   if (wake) wake.release().catch(() => {});
   uploadBusy = false;
   document.getElementById('uploadInput').value = '';
