@@ -21,3 +21,17 @@ git -C $root push
 if ($Notes -eq "") { $Notes = "Zephyr Remote $Version" }
 gh release create "v$Version" "$build\ZephyrRemoteSetup.exe" --repo JamilDbiat/ZephyrRemote --title "Zephyr Remote $Version" --notes $Notes
 Write-Host "Released v$Version" -ForegroundColor Green
+
+$apkDir = Join-Path $env:TEMP 'ZephyrApk'
+Remove-Item $apkDir -Recurse -Force -ErrorAction SilentlyContinue
+$appRun = (gh run list --repo JamilDbiat/ZephyrRemote --workflow app.yml --status success --limit 1 --json databaseId | Out-String | ConvertFrom-Json)
+if ($appRun) {
+    gh run download $appRun[0].databaseId --repo JamilDbiat/ZephyrRemote -n ZephyrRemote-android --dir $apkDir
+    $apk = Get-ChildItem $apkDir -Filter *.apk | Select-Object -First 1
+    if ($apk) {
+        Copy-Item $apk.FullName "$apkDir\ZephyrRemote-Android.apk"
+        gh release upload "v$Version" "$apkDir\ZephyrRemote-Android.apk" --repo JamilDbiat/ZephyrRemote --clobber
+        Write-Host "Attached Android app" -ForegroundColor Green
+    }
+}
+
