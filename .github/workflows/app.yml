@@ -39,7 +39,7 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Use newest Xcode
         run: |
-          XCODE=$(ls -d /Applications/Xcode_26.0*.app 2>/dev/null | sort -V | tail -1); [ -z "$XCODE" ] && XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | head -1)
+          XCODE=$(ls -d /Applications/Xcode_26.2*.app 2>/dev/null | sort -V | tail -1); [ -z "$XCODE" ] && XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | head -1)
           ls -d /Applications/Xcode_*.app; echo "Using $XCODE"
           sudo xcode-select -s "$XCODE"
       - run: dotnet --version
