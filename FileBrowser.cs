@@ -49,20 +49,25 @@ public class FileBrowser
         return folders.Concat(files).ToList();
     }
 
+    private readonly object uploadLock = new();
+
     public string NewUploadPath(string name)
     {
         string clean = Path.GetFileName(name);
         if (clean == "")
             clean = "file";
-        string path = Path.Combine(UploadFolder, clean);
-        int n = 2;
-        while (File.Exists(path))
+        lock (uploadLock)
         {
-            path = Path.Combine(UploadFolder, $"{Path.GetFileNameWithoutExtension(clean)} ({n}){Path.GetExtension(clean)}");
-            n++;
+            string path = Path.Combine(UploadFolder, clean);
+            int n = 2;
+            while (File.Exists(path))
+            {
+                path = Path.Combine(UploadFolder, $"{Path.GetFileNameWithoutExtension(clean)} ({n}){Path.GetExtension(clean)}");
+                n++;
+            }
+            File.Create(path).Dispose();
+            return path;
         }
-        File.Create(path).Dispose();
-        return path;
     }
 
     public string? UploadPath(string name)

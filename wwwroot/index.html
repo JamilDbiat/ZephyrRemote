@@ -760,21 +760,73 @@ async function fileOpenOnPc(i) {
   toast(res.ok ? 'Opened on PC' : 'Failed');
 }
 
-async function uploadFiles(list) {
-  const status = document.getElementById('uploadStatus');
+let uploadBusy = false;
+
+async function sendFile(file) {
   const chunk = 8 * 1024 * 1024;
-  for (const file of list) {
-    let name = file.name;
-    for (let offset = 0; offset < file.size || offset === 0; offset += chunk) {
-      status.innerHTML = `<div class="card"><small>Sending ${escapeHtml(file.name)}… ${Math.round(offset / Math.max(file.size, 1) * 100)}%</small></div>`;
-      const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk) });
-      if (!res.ok) { status.innerHTML = `<div class="card"><small>${escapeHtml(file.name)} failed to send</small></div>`; return; }
-      name = (await res.json()).name;
-      if (file.size === 0) break;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      let name = file.name;
+      for (let offset = 0; offset < file.size || offset === 0; offset += chunk) {
+        const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk) });
+        if (!res.ok) throw new Error('upload');
+        name = (await res.json()).name;
+        if (file.size === 0) break;
+      }
+      return true;
+    } catch {
+      await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
     }
   }
-  status.innerHTML = `<div class="card"><small style="color:#5BE3A0">Sent ${list.length} file${list.length > 1 ? 's' : ''} to Downloads\\Zephyr</small></div>`;
+  return false;
+}
+
+async function uploadFiles(list) {
+  if (uploadBusy || !list || !list.length) return;
+  uploadBusy = true;
+  const files = Array.from(list);
+  const queue = files.slice();
+  const failed = [];
+  const totalBytes = files.reduce((n, f) => n + f.size, 0);
+  const started = Date.now();
+  let done = 0, sentBytes = 0;
+  let wake = null;
+  try { wake = await navigator.wakeLock.request('screen'); } catch {}
+
+  const status = document.getElementById('uploadStatus');
+  const draw = () => {
+    const pct = Math.round(sentBytes / Math.max(totalBytes, 1) * 100);
+    const secs = (Date.now() - started) / 1000;
+    const left = sentBytes > 0 && secs > 3 ? Math.round(secs * (totalBytes - sentBytes) / sentBytes) : 0;
+    status.innerHTML = `<div class="card">
+      <div style="display:flex;justify-content:space-between;font-size:14px"><b style="font-size:14px">Sending ${done + failed.length} of ${files.length}</b><span style="color:var(--muted)">${pct}%</span></div>
+      <div style="height:6px;border-radius:3px;background:var(--card2)"><div style="height:6px;width:${pct}%;border-radius:3px;background:var(--accent);transition:width .3s"></div></div>
+      <small>${size(sentBytes)} of ${size(totalBytes)}${left ? ' · about ' + (left > 90 ? Math.round(left / 60) + ' min' : left + ' s') + ' left' : ''}${failed.length ? ' · ' + failed.length + ' failed' : ''}. Keep this page open.</small>
+    </div>`;
+  };
+  draw();
+
+  const worker = async () => {
+    while (queue.length) {
+      const file = queue.shift();
+      if (await sendFile(file)) done++;
+      else failed.push(file);
+      sentBytes += file.size;
+      draw();
+    }
+  };
+  const lanes = location.protocol === 'https:' ? 4 : 6;
+  await Promise.all(Array.from({ length: Math.min(lanes, files.length) }, worker));
+
+  if (wake) wake.release().catch(() => {});
+  uploadBusy = false;
   document.getElementById('uploadInput').value = '';
+  if (failed.length) {
+    window.retryFiles = failed;
+    status.innerHTML = `<div class="card"><small>Sent ${done} of ${files.length}. ${failed.length} didn't make it.</small><button class="primary" onclick="uploadFiles(window.retryFiles)">Retry ${failed.length}</button></div>`;
+  } else {
+    status.innerHTML = `<div class="card"><small style="color:#5BE3A0">Sent all ${files.length} file${files.length > 1 ? 's' : ''} to Downloads\\Zephyr in ${Math.max(1, Math.round((Date.now() - started) / 1000))} s</small></div>`;
+  }
   if (document.getElementById('filePath').textContent.endsWith('Zephyr')) openFolder(document.getElementById('filePath').textContent);
 }
 
