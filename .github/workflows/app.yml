@@ -31,7 +31,7 @@ jobs:
           path: out/*-Signed.apk
 
   ios:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -40,7 +40,7 @@ jobs:
       - name: Use newest Xcode
         run: |
           XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
-          echo "Using $XCODE"
+          ls -d /Applications/Xcode_*.app; echo "Using $XCODE"
           sudo xcode-select -s "$XCODE"
       - run: dotnet --version
         working-directory: app
