@@ -54,7 +54,7 @@ public class PairPage : ContentPage
                     new Label { Text = "Connect to your PC", FontSize = 26, FontAttributes = FontAttributes.Bold, TextColor = Colors.White, HorizontalTextAlignment = TextAlignment.Center },
                     new Label
                     {
-                        Text = "Install Zephyr Remote on your Windows PC (github.com/JamilDbiat/ZephyrRemote), then type the link it shows. At home use the Wi-Fi link; away from home use the remote link from Settings.",
+                        Text = "Install Zephyr Remote on your Windows PC, then type the link it shows. At home use the Wi-Fi link; away from home use the remote link from Settings.",
                         FontSize = 14, TextColor = Color.FromArgb("#8A93A6"), HorizontalTextAlignment = TextAlignment.Center
                     },
                     linkEntry,
