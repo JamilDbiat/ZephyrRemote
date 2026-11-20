@@ -157,8 +157,17 @@ app.MapPost("/api/files/upload", async (HttpRequest request, string name, long o
     string? path = offset == 0 ? files.NewUploadPath(name) : files.UploadPath(name);
     if (path == null)
         return Results.NotFound();
-    await using (FileStream stream = new(path, FileMode.Append, FileAccess.Write))
+    try
+    {
+        await using FileStream stream = new(path, FileMode.Append, FileAccess.Write);
         await request.Body.CopyToAsync(stream);
+    }
+    catch (Exception)
+    {
+        if (offset == 0)
+            File.Delete(path);
+        return Results.StatusCode(500);
+    }
     return Results.Ok(new { name = Path.GetFileName(path) });
 });
 

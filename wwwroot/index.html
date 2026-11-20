@@ -762,20 +762,36 @@ async function fileOpenOnPc(i) {
 
 let uploadBusy = false;
 
+function waitVisible() {
+  if (!document.hidden) return Promise.resolve();
+  return new Promise(resolve => {
+    const back = () => { if (!document.hidden) { document.removeEventListener('visibilitychange', back); resolve(); } };
+    document.addEventListener('visibilitychange', back);
+  });
+}
+
 async function sendFile(file) {
   const chunk = 8 * 1024 * 1024;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  let name = file.name;
+  let offset = 0;
+  let failures = 0;
+  while (failures < 6) {
+    await waitVisible();
+    const abort = new AbortController();
+    const limit = setTimeout(() => abort.abort(), 60000);
     try {
-      let name = file.name;
-      for (let offset = 0; offset < file.size || offset === 0; offset += chunk) {
-        const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk) });
-        if (!res.ok) throw new Error('upload');
-        name = (await res.json()).name;
-        if (file.size === 0) break;
-      }
-      return true;
+      const res = await fetch(`/api/files/upload?name=${encodeURIComponent(name)}&offset=${offset}&${auth()}`, { method: 'POST', body: file.slice(offset, offset + chunk), signal: abort.signal });
+      if (!res.ok) throw new Error('upload');
+      name = (await res.json()).name;
+      offset += chunk;
+      failures = 0;
+      if (offset >= file.size) return true;
     } catch {
-      await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+      if (!document.hidden) failures++;
+      if (offset > 0) offset = 0, name = file.name;
+      await new Promise(r => setTimeout(r, 1500));
+    } finally {
+      clearTimeout(limit);
     }
   }
   return false;
@@ -801,7 +817,7 @@ async function uploadFiles(list) {
     status.innerHTML = `<div class="card">
       <div style="display:flex;justify-content:space-between;font-size:14px"><b style="font-size:14px">Sending ${done + failed.length} of ${files.length}</b><span style="color:var(--muted)">${pct}%</span></div>
       <div style="height:6px;border-radius:3px;background:var(--card2)"><div style="height:6px;width:${pct}%;border-radius:3px;background:var(--accent);transition:width .3s"></div></div>
-      <small>${size(sentBytes)} of ${size(totalBytes)}${left ? ' · about ' + (left > 90 ? Math.round(left / 60) + ' min' : left + ' s') + ' left' : ''}${failed.length ? ' · ' + failed.length + ' failed' : ''}. Keep this page open.</small>
+      <small>${size(sentBytes)} of ${size(totalBytes)}${left ? ' · about ' + (left > 90 ? Math.round(left / 60) + ' min' : left + ' s') + ' left' : ''}${failed.length ? ' · ' + failed.length + ' failed' : ''}. Keep Zephyr open: switching apps pauses sending, and it continues when you come back.</small>
     </div>`;
   };
   draw();
