@@ -19,8 +19,12 @@ jobs:
         with:
           distribution: 'microsoft'
           java-version: '17'
+      - run: dotnet --version
+        working-directory: app
       - run: dotnet workload install maui-android
-      - run: dotnet publish app/ZephyrApp/ZephyrApp.csproj -f net10.0-android -c Release -p:AndroidPackageFormats=apk -o out
+        working-directory: app
+      - run: dotnet publish ZephyrApp/ZephyrApp.csproj -f net10.0-android -c Release -p:TargetFrameworks=net10.0-android -p:AndroidPackageFormats=apk -o ../out
+        working-directory: app
       - uses: actions/upload-artifact@v4
         with:
           name: ZephyrRemote-android
@@ -38,8 +42,12 @@ jobs:
           XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
           echo "Using $XCODE"
           sudo xcode-select -s "$XCODE"
+      - run: dotnet --version
+        working-directory: app
       - run: dotnet workload install maui-ios
-      - run: dotnet build app/ZephyrApp/ZephyrApp.csproj -f net10.0-ios -c Release -p:RuntimeIdentifier=ios-arm64 -p:EnableCodeSigning=false
+        working-directory: app
+      - run: dotnet build ZephyrApp/ZephyrApp.csproj -f net10.0-ios -c Release -p:TargetFrameworks=net10.0-ios -p:RuntimeIdentifier=ios-arm64 -p:EnableCodeSigning=false
+        working-directory: app
       - name: Make IPA
         run: |
           APP=$(find app/ZephyrApp/bin/Release -name "*.app" -type d | head -1)
