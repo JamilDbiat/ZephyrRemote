@@ -152,8 +152,10 @@ app.MapGet("/api/files/download", (string path) =>
     return Results.File(path, "application/octet-stream", Path.GetFileName(path), enableRangeProcessing: true);
 });
 
-app.MapPost("/api/files/upload", async (HttpRequest request, string name, long offset) =>
+app.MapPost("/api/files/upload", async (HttpRequest request, string name, long offset, long? len) =>
 {
+    if (len != null && request.ContentLength != null && request.ContentLength != len)
+        return Results.BadRequest();
     string? path = offset == 0 ? files.NewUploadPath(name) : files.UploadPath(name);
     if (path == null)
         return Results.NotFound();
