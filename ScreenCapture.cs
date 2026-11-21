@@ -8,12 +8,12 @@ public class ScreenCapture
 {
     private static readonly ImageCodecInfo Jpeg = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
 
-    public int Count => Screen.AllScreens.Length;
+    public int Count => ScreenMap.Ordered().Count;
 
     public byte[] Capture(int index, int maxWidth, long quality)
     {
-        Screen[] screens = Screen.AllScreens;
-        if (index < 0 || index >= screens.Length)
+        List<Screen> screens = ScreenMap.Ordered();
+        if (index < 0 || index >= screens.Count)
             return Array.Empty<byte>();
 
         Rectangle bounds = screens[index].Bounds;

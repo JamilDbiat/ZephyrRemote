@@ -39,8 +39,8 @@ public class MouseController
 
     public bool MoveTo(int screen, double x, double y)
     {
-        Screen[] screens = Screen.AllScreens;
-        if (screen < 0 || screen >= screens.Length || x < 0 || x > 1 || y < 0 || y > 1)
+        List<Screen> screens = ScreenMap.Ordered();
+        if (screen < 0 || screen >= screens.Count || x < 0 || x > 1 || y < 0 || y > 1)
             return false;
 
         Rectangle bounds = screens[screen].Bounds;
